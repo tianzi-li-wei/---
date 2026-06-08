@@ -1,18 +1,19 @@
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
+#include <iostream>
 
-int main(int argc, char *argv[])
+#include "RuleEngine.h"
+
+int main()
 {
-    QGuiApplication app(argc, argv);
+    RuleEngine engine;
 
-    QQmlApplicationEngine engine;
-    QObject::connect(
-        &engine,
-        &QQmlApplicationEngine::objectCreationFailed,
-        &app,
-        []() { QCoreApplication::exit(-1); },
-        Qt::QueuedConnection);
-    engine.loadFromModule("Xiangqi", "Main");
+    Piece p = engine.queryPiece(4,4);
 
-    return QGuiApplication::exec();
+    std::cout
+        << "side = "
+        << p.side
+        << " type = "
+        << p.type
+        << std::endl;
+
+    return 0;
 }

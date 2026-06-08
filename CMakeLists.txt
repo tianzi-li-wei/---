@@ -23,6 +23,11 @@ qt_add_qml_module(appXiangqi
     VERSION 1.0
     QML_FILES
             qml/Main.qml
+            SOURCES Constants.h
+            SOURCES Piece.h
+            SOURCES MoveResult.h
+            SOURCES ChessBoard.h ChessBoard.cpp
+            SOURCES RuleEngine.h RuleEngine.cpp
 )
 target_compile_features(appXiangqi PRIVATE cxx_std_23)
 target_link_libraries(appXiangqi
