@@ -40,8 +40,8 @@ ApplicationWindow {
         Rectangle {
             id: board
 
-            width: Math.min(parent.width - 80, parent.height - 80)
-            height: width
+            width: Math.min(parent.width - 100, (parent.height - 100) * 8 / 9)
+            height: width * 9 / 8
 
             anchors.centerIn: parent
 
@@ -50,22 +50,80 @@ ApplicationWindow {
             border.color: "#5a2f14"
             border.width: 3
 
-            Column {
-                anchors.centerIn: parent
-                spacing: 12
+            Canvas {
+                id: chessBoardCanvas
 
-                Label {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "棋盘区域"
-                    font.pixelSize: 32
-                    font.bold: true
-                    color: "#4a260f"
-                }
+                anchors.fill: parent
+                anchors.margins: 36
 
-                Label {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    font.pixelSize: 16
-                    color: "#4a260f"
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
+
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.clearRect(0, 0, width, height)
+
+                    var rows = 10
+                    var cols = 9
+
+                    var cellW = width / (cols - 1)
+                    var cellH = height / (rows - 1)
+
+                    ctx.strokeStyle = "#4a260f"
+                    ctx.lineWidth = 2
+
+                    // 画横线：10 行
+                    for (var r = 0; r < rows; r++) {
+                        ctx.beginPath()
+                        ctx.moveTo(0, r * cellH)
+                        ctx.lineTo(width, r * cellH)
+                        ctx.stroke()
+                    }
+
+                    // 画竖线：9 列，中间留出楚河汉界
+                    for (var c = 0; c < cols; c++) {
+                        var x = c * cellW
+
+                        ctx.beginPath()
+
+                        if (c === 0 || c === cols - 1) {
+                            ctx.moveTo(x, 0)
+                            ctx.lineTo(x, height)
+                        } else {
+                            ctx.moveTo(x, 0)
+                            ctx.lineTo(x, 4 * cellH)
+
+                            ctx.moveTo(x, 5 * cellH)
+                            ctx.lineTo(x, height)
+                        }
+
+                        ctx.stroke()
+                    }
+
+                    // 上方九宫格
+                    ctx.beginPath()
+                    ctx.moveTo(3 * cellW, 0)
+                    ctx.lineTo(5 * cellW, 2 * cellH)
+                    ctx.moveTo(5 * cellW, 0)
+                    ctx.lineTo(3 * cellW, 2 * cellH)
+                    ctx.stroke()
+
+                    // 下方九宫格
+                    ctx.beginPath()
+                    ctx.moveTo(3 * cellW, 7 * cellH)
+                    ctx.lineTo(5 * cellW, 9 * cellH)
+                    ctx.moveTo(5 * cellW, 7 * cellH)
+                    ctx.lineTo(3 * cellW, 9 * cellH)
+                    ctx.stroke()
+
+                    // 楚河汉界
+                    ctx.fillStyle = "#4a260f"
+                    ctx.font = "bold 28px sans-serif"
+                    ctx.textAlign = "center"
+                    ctx.textBaseline = "middle"
+
+                    ctx.fillText("楚 河", width * 0.28, 4.5 * cellH)
+                    ctx.fillText("汉 界", width * 0.72, 4.5 * cellH)
                 }
             }
         }
