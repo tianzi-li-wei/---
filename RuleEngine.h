@@ -33,4 +33,30 @@ public:
 private:
 
     ChessBoard board;
+
+private:
+
+    bool validateRook(
+        int fromX,
+        int fromY,
+        int toX,
+        int toY) const;
+
+    bool validateHorse(
+        int fromX,
+        int fromY,
+        int toX,
+        int toY) const;
+
+    bool validateCannon(
+        int fromX,
+        int fromY,
+        int toX,
+        int toY) const;
+
+    bool validatePawn(
+        int fromX,
+        int fromY,
+        int toX,
+        int toY) const;
 };
