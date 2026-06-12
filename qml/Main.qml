@@ -12,19 +12,8 @@ ApplicationWindow {
     visible: true
     title: "Xiangqi - 中国象棋"
 
-    color: "#1f1f1f"
+    color: "black"
 
-    header: ToolBar {
-        height: 56
-
-        Label {
-            anchors.centerIn: parent
-            text: "Xiangqi 中国象棋"
-            font.pixelSize: 22
-            font.bold: true
-            color: "white"
-        }
-    }
 
     Rectangle {
         id: background
@@ -33,8 +22,8 @@ ApplicationWindow {
         anchors.margins: 20
 
         radius: 16
-        color: "#2b2b2b"
-        border.color: "#555555"
+        color: "gray"
+        border.color: "white"
         border.width: 1
 
         Rectangle {
@@ -46,15 +35,22 @@ ApplicationWindow {
             anchors.centerIn: parent
 
             radius: 8
-            color: "#c98b4f"
-            border.color: "#5a2f14"
+            color: "orange"
+            border.color: "brown"
             border.width: 3
+
+            property int boardMargin: 36
+            property real gridWidth: width - boardMargin * 2
+            property real gridHeight: height - boardMargin * 2
+            property real cellW: gridWidth / 8
+            property real cellH: gridHeight / 9
+            property real pieceSize: Math.min(cellW, cellH) * 0.72
 
             Canvas {
                 id: chessBoardCanvas
 
                 anchors.fill: parent
-                anchors.margins: 36
+                anchors.margins: board.boardMargin
 
                 onWidthChanged: requestPaint()
                 onHeightChanged: requestPaint()
@@ -69,7 +65,7 @@ ApplicationWindow {
                     var cellW = width / (cols - 1)
                     var cellH = height / (rows - 1)
 
-                    ctx.strokeStyle = "#4a260f"
+                    ctx.strokeStyle = "brown"
                     ctx.lineWidth = 2
 
                     // 画横线：10 行
@@ -117,13 +113,82 @@ ApplicationWindow {
                     ctx.stroke()
 
                     // 楚河汉界
-                    ctx.fillStyle = "#4a260f"
+                    ctx.fillStyle = "brown"
                     ctx.font = "bold 28px sans-serif"
                     ctx.textAlign = "center"
                     ctx.textBaseline = "middle"
 
                     ctx.fillText("楚 河", width * 0.28, 4.5 * cellH)
                     ctx.fillText("汉 界", width * 0.72, 4.5 * cellH)
+                }
+            }
+
+            ListModel {
+                id: pieceModel
+
+                // 黑方
+                ListElement { col: 0; row: 0; side: "black"; text: "车" }
+                ListElement { col: 1; row: 0; side: "black"; text: "马" }
+                ListElement { col: 2; row: 0; side: "black"; text: "象" }
+                ListElement { col: 3; row: 0; side: "black"; text: "士" }
+                ListElement { col: 4; row: 0; side: "black"; text: "将" }
+                ListElement { col: 5; row: 0; side: "black"; text: "士" }
+                ListElement { col: 6; row: 0; side: "black"; text: "象" }
+                ListElement { col: 7; row: 0; side: "black"; text: "马" }
+                ListElement { col: 8; row: 0; side: "black"; text: "车" }
+
+                ListElement { col: 1; row: 2; side: "black"; text: "炮" }
+                ListElement { col: 7; row: 2; side: "black"; text: "炮" }
+
+                ListElement { col: 0; row: 3; side: "black"; text: "卒" }
+                ListElement { col: 2; row: 3; side: "black"; text: "卒" }
+                ListElement { col: 4; row: 3; side: "black"; text: "卒" }
+                ListElement { col: 6; row: 3; side: "black"; text: "卒" }
+                ListElement { col: 8; row: 3; side: "black"; text: "卒" }
+
+                // 红方
+                ListElement { col: 0; row: 9; side: "red"; text: "车" }
+                ListElement { col: 1; row: 9; side: "red"; text: "马" }
+                ListElement { col: 2; row: 9; side: "red"; text: "相" }
+                ListElement { col: 3; row: 9; side: "red"; text: "仕" }
+                ListElement { col: 4; row: 9; side: "red"; text: "帅" }
+                ListElement { col: 5; row: 9; side: "red"; text: "仕" }
+                ListElement { col: 6; row: 9; side: "red"; text: "相" }
+                ListElement { col: 7; row: 9; side: "red"; text: "马" }
+                ListElement { col: 8; row: 9; side: "red"; text: "车" }
+
+                ListElement { col: 1; row: 7; side: "red"; text: "炮" }
+                ListElement { col: 7; row: 7; side: "red"; text: "炮" }
+
+                ListElement { col: 0; row: 6; side: "red"; text: "兵" }
+                ListElement { col: 2; row: 6; side: "red"; text: "兵" }
+                ListElement { col: 4; row: 6; side: "red"; text: "兵" }
+                ListElement { col: 6; row: 6; side: "red"; text: "兵" }
+                ListElement { col: 8; row: 6; side: "red"; text: "兵" }
+            }
+
+            Repeater {
+                model: pieceModel
+
+                Rectangle {
+                    width: board.pieceSize
+                    height: board.pieceSize
+                    radius: width / 2
+
+                    x: board.boardMargin + model.col * board.cellW - width / 2
+                    y: board.boardMargin + model.row * board.cellH - height / 2
+
+                    color: "white"
+                    border.width: 2
+                    border.color: model.side === "red" ? "red" : "black"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: model.text
+                        color: model.side === "red" ? "red" : "black"
+                        font.pixelSize: parent.width * 0.5
+                        font.bold: true
+                    }
                 }
             }
         }
