@@ -45,6 +45,7 @@ ApplicationWindow {
             property real cellW: gridWidth / 8
             property real cellH: gridHeight / 9
             property real pieceSize: Math.min(cellW, cellH) * 0.72
+            property int selectedPieceIndex: -1
 
             Canvas {
                 id: chessBoardCanvas
@@ -171,6 +172,10 @@ ApplicationWindow {
                 model: pieceModel
 
                 Rectangle {
+                    id: piece
+
+                    property bool selected: index === board.selectedPieceIndex
+
                     width: board.pieceSize
                     height: board.pieceSize
                     radius: width / 2
@@ -178,8 +183,11 @@ ApplicationWindow {
                     x: board.boardMargin + model.col * board.cellW - width / 2
                     y: board.boardMargin + model.row * board.cellH - height / 2
 
-                    color: "white"
-                    border.width: 2
+                    scale: selected ? 1.12 : 1.0
+                    z: selected ? 2 : 1
+
+                    color: selected ? "yellow" : "white"
+                    border.width: selected ? 4 : 2
                     border.color: model.side === "red" ? "red" : "black"
 
                     Text {
@@ -188,6 +196,21 @@ ApplicationWindow {
                         color: model.side === "red" ? "red" : "black"
                         font.pixelSize: parent.width * 0.5
                         font.bold: true
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+
+                        onClicked: {
+                            board.selectedPieceIndex = index
+                            console.log("Selected piece:", model.text, "col:", model.col, "row:", model.row)
+                        }
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 120
+                        }
                     }
                 }
             }
