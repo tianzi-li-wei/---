@@ -14,7 +14,6 @@ ApplicationWindow {
 
     color: "black"
 
-
     Rectangle {
         id: background
 
@@ -47,6 +46,18 @@ ApplicationWindow {
             property real pieceSize: Math.min(cellW, cellH) * 0.72
             property int selectedPieceIndex: -1
 
+            function pieceIndexAt(col, row) {
+                for (var i = 0; i < pieceModel.count; i++) {
+                    var piece = pieceModel.get(i)
+
+                    if (piece.col === col && piece.row === row) {
+                        return i
+                    }
+                }
+
+                return -1
+            }
+
             Canvas {
                 id: chessBoardCanvas
 
@@ -69,7 +80,7 @@ ApplicationWindow {
                     ctx.strokeStyle = "brown"
                     ctx.lineWidth = 2
 
-                    // 画横线：10 行
+                    // Draw horizontal lines
                     for (var r = 0; r < rows; r++) {
                         ctx.beginPath()
                         ctx.moveTo(0, r * cellH)
@@ -77,7 +88,7 @@ ApplicationWindow {
                         ctx.stroke()
                     }
 
-                    // 画竖线：9 列，中间留出楚河汉界
+                    // Draw vertical lines
                     for (var c = 0; c < cols; c++) {
                         var x = c * cellW
 
@@ -97,7 +108,7 @@ ApplicationWindow {
                         ctx.stroke()
                     }
 
-                    // 上方九宫格
+                    // Top palace
                     ctx.beginPath()
                     ctx.moveTo(3 * cellW, 0)
                     ctx.lineTo(5 * cellW, 2 * cellH)
@@ -105,7 +116,7 @@ ApplicationWindow {
                     ctx.lineTo(3 * cellW, 2 * cellH)
                     ctx.stroke()
 
-                    // 下方九宫格
+                    // Bottom palace
                     ctx.beginPath()
                     ctx.moveTo(3 * cellW, 7 * cellH)
                     ctx.lineTo(5 * cellW, 9 * cellH)
@@ -113,7 +124,7 @@ ApplicationWindow {
                     ctx.lineTo(3 * cellW, 9 * cellH)
                     ctx.stroke()
 
-                    // 楚河汉界
+                    // River text
                     ctx.fillStyle = "brown"
                     ctx.font = "bold 28px sans-serif"
                     ctx.textAlign = "center"
@@ -127,7 +138,7 @@ ApplicationWindow {
             ListModel {
                 id: pieceModel
 
-                // 黑方
+                // Black side
                 ListElement { col: 0; row: 0; side: "black"; text: "车" }
                 ListElement { col: 1; row: 0; side: "black"; text: "马" }
                 ListElement { col: 2; row: 0; side: "black"; text: "象" }
@@ -147,7 +158,7 @@ ApplicationWindow {
                 ListElement { col: 6; row: 3; side: "black"; text: "卒" }
                 ListElement { col: 8; row: 3; side: "black"; text: "卒" }
 
-                // 红方
+                // Red side
                 ListElement { col: 0; row: 9; side: "red"; text: "车" }
                 ListElement { col: 1; row: 9; side: "red"; text: "马" }
                 ListElement { col: 2; row: 9; side: "red"; text: "相" }
@@ -198,19 +209,44 @@ ApplicationWindow {
                         font.bold: true
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-
-                        onClicked: {
-                            board.selectedPieceIndex = index
-                            console.log("Selected piece:", model.text, "col:", model.col, "row:", model.row)
-                        }
-                    }
-
                     Behavior on scale {
                         NumberAnimation {
                             duration: 120
                         }
+                    }
+                }
+            }
+
+            TapHandler {
+                onTapped: function(eventPoint, button) {
+                    var localX = eventPoint.position.x - board.boardMargin
+                    var localY = eventPoint.position.y - board.boardMargin
+
+                    if (localX < 0 || localX > board.gridWidth ||
+                        localY < 0 || localY > board.gridHeight) {
+                        return
+                    }
+
+                    var col = Math.round(localX / board.cellW)
+                    var row = Math.round(localY / board.cellH)
+
+                    var pieceIndex = board.pieceIndexAt(col, row)
+
+                    if (pieceIndex >= 0) {
+                        board.selectedPieceIndex = pieceIndex
+
+                        var clickedPiece = pieceModel.get(pieceIndex)
+
+                        console.log("Clicked piece:",
+                                    clickedPiece.text,
+                                    "col:", col,
+                                    "row:", row)
+                    } else {
+                        board.selectedPieceIndex = -1
+
+                        console.log("Clicked board:",
+                                    "col:", col,
+                                    "row:", row)
                     }
                 }
             }
