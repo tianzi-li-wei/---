@@ -244,21 +244,14 @@ ApplicationWindow {
                     var pieceIndex = board.pieceIndexAt(col, row)
 
                     if (pieceIndex >= 0) {
-                        board.selectedPieceIndex = pieceIndex
-
-                        var clickedPiece = pieceModel.get(pieceIndex)
-
-                        console.log("Clicked piece:",
-                                    clickedPiece.text,
-                                    "col:", col,
-                                    "row:", row)
-                    } else {
-                        board.selectedPieceIndex = -1
-
-                        console.log("Clicked board:",
-                                    "col:", col,
-                                    "row:", row)
+                        return
                     }
+
+                    board.selectedPieceIndex = -1
+
+                    console.log("Clicked board:",
+                                "col:", col,
+                                "row:", row)
                 }
             }
         }
