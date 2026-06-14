@@ -13,7 +13,14 @@ qt_standard_project_setup(REQUIRES 6.11)
 qt_add_executable(appXiangqi
     main.cpp
 
-    core/README.md
+    core/Constants.h
+    core/Piece.h
+    core/MoveResult.h
+    core/ChessBoard.h
+    core/ChessBoard.cpp
+    core/RuleEngine.h
+    core/RuleEngine.cpp
+
     controller/README.md
     network/README.md
     docs/interface.md
