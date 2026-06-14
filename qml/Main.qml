@@ -139,7 +139,7 @@ ApplicationWindow {
                 id: pieceModel
 
                 // Black side
-                ListElement { col: 0; row: 0; side: "black"; text: "车" }
+                ListElement { col: 0; row: 0; side: "black"; text: "車" }
                 ListElement { col: 1; row: 0; side: "black"; text: "马" }
                 ListElement { col: 2; row: 0; side: "black"; text: "象" }
                 ListElement { col: 3; row: 0; side: "black"; text: "士" }
@@ -147,7 +147,7 @@ ApplicationWindow {
                 ListElement { col: 5; row: 0; side: "black"; text: "士" }
                 ListElement { col: 6; row: 0; side: "black"; text: "象" }
                 ListElement { col: 7; row: 0; side: "black"; text: "马" }
-                ListElement { col: 8; row: 0; side: "black"; text: "车" }
+                ListElement { col: 8; row: 0; side: "black"; text: "車" }
 
                 ListElement { col: 1; row: 2; side: "black"; text: "炮" }
                 ListElement { col: 7; row: 2; side: "black"; text: "炮" }
@@ -159,7 +159,7 @@ ApplicationWindow {
                 ListElement { col: 8; row: 3; side: "black"; text: "卒" }
 
                 // Red side
-                ListElement { col: 0; row: 9; side: "red"; text: "车" }
+                ListElement { col: 0; row: 9; side: "red"; text: "車" }
                 ListElement { col: 1; row: 9; side: "red"; text: "马" }
                 ListElement { col: 2; row: 9; side: "red"; text: "相" }
                 ListElement { col: 3; row: 9; side: "red"; text: "仕" }
@@ -167,7 +167,7 @@ ApplicationWindow {
                 ListElement { col: 5; row: 9; side: "red"; text: "仕" }
                 ListElement { col: 6; row: 9; side: "red"; text: "相" }
                 ListElement { col: 7; row: 9; side: "red"; text: "马" }
-                ListElement { col: 8; row: 9; side: "red"; text: "车" }
+                ListElement { col: 8; row: 9; side: "red"; text: "車" }
 
                 ListElement { col: 1; row: 7; side: "red"; text: "炮" }
                 ListElement { col: 7; row: 7; side: "red"; text: "炮" }
@@ -207,6 +207,17 @@ ApplicationWindow {
                         color: model.side === "red" ? "red" : "black"
                         font.pixelSize: parent.width * 0.5
                         font.bold: true
+                    }
+
+                    TapHandler {
+                        onTapped: {
+                            board.selectedPieceIndex = index
+
+                            console.log("Clicked piece:",
+                                        model.text,
+                                        "col:", model.col,
+                                        "row:", model.row)
+                        }
                     }
 
                     Behavior on scale {
