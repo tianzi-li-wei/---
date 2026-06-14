@@ -12,8 +12,9 @@ qt_standard_project_setup(REQUIRES 6.11)
 
 qt_add_executable(appXiangqi
     main.cpp
-
     core/README.md
+    core/ChessBoard.cpp
+    core/RuleEngine.cpp
     controller/README.md
     network/README.md
     docs/interface.md
@@ -26,8 +27,8 @@ qt_add_qml_module(appXiangqi
             SOURCES Constants.h
             SOURCES Piece.h
             SOURCES MoveResult.h
-            SOURCES ChessBoard.h ChessBoard.cpp
-            SOURCES RuleEngine.h RuleEngine.cpp
+            SOURCES ChessBoard.h
+            SOURCES RuleEngine.h
 )
 target_compile_features(appXiangqi PRIVATE cxx_std_23)
 target_link_libraries(appXiangqi
