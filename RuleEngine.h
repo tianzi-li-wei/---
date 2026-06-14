@@ -29,12 +29,14 @@ public:
     Piece queryPiece(
         int x,
         int y) const;
+    int currentPlayer() const;
 
 private:
 
     ChessBoard board;
 
 private:
+    int currentSide;
 
     bool validateRook(
         int fromX,
@@ -55,6 +57,30 @@ private:
         int toY) const;
 
     bool validatePawn(
+        int fromX,
+        int fromY,
+        int toX,
+        int toY) const;
+
+    bool validateKing(
+        int fromX,
+        int fromY,
+        int toX,
+        int toY) const;
+
+    bool validateAdvisor(
+        int fromX,
+        int fromY,
+        int toX,
+        int toY) const;
+
+    bool validateElephant(
+        int fromX,
+        int fromY,
+        int toX,
+        int toY) const;
+
+    bool kingsFaceToFaceAfterMove(
         int fromX,
         int fromY,
         int toX,

@@ -1,6 +1,7 @@
 #include "RuleEngine.h"
 #include"Constants.h"
 #include <cstdlib>
+#include<algorithm>
 
 RuleEngine::RuleEngine()
 {
@@ -65,9 +66,38 @@ bool RuleEngine::isValidMove(
             fromX,fromY,
             toX,toY);
 
+    case Xiangqi::TYPE_KING:
+        if(!validateKing(
+                fromX,fromY,
+                toX,toY))
+            return false;
+        break;
+
+    case Xiangqi::TYPE_ADVISOR:
+        if(!validateAdvisor(
+                fromX,fromY,
+                toX,toY))
+            return false;
+        break;
+
+    case Xiangqi::TYPE_BISHOP:
+        if(!validateElephant(
+                fromX,fromY,
+                toX,toY))
+            return false;
+        break;
+
     default:
         return false;
     }
+    if(kingsFaceToFaceAfterMove(
+            fromX,fromY,
+            toX,toY))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 MoveResult RuleEngine::movePiece(
@@ -360,4 +390,180 @@ bool RuleEngine::validatePawn(
     }
 
     return false;
+}
+
+bool RuleEngine::validateKing(
+    int fromX,
+    int fromY,
+    int toX,
+    int toY) const
+{
+    int dx = std::abs(toX - fromX);
+    int dy = std::abs(toY - fromY);
+
+    if(dx + dy != 1)
+    {
+        return false;
+    }
+
+    Piece king =
+        board.getPiece(fromX,fromY);
+
+    if(king.side == Xiangqi::SIDE_RED)
+    {
+        return toX >= 3 &&
+               toX <= 5 &&
+               toY >= 7 &&
+               toY <= 9;
+    }
+
+    return toX >= 3 &&
+           toX <= 5 &&
+           toY >= 0 &&
+           toY <= 2;
+}
+
+bool RuleEngine::validateAdvisor(
+    int fromX,
+    int fromY,
+    int toX,
+    int toY) const
+{
+    int dx = std::abs(toX - fromX);
+    int dy = std::abs(toY - fromY);
+
+    if(dx != 1 || dy != 1)
+    {
+        return false;
+    }
+
+    Piece advisor =
+        board.getPiece(fromX,fromY);
+
+    if(advisor.side == Xiangqi::SIDE_RED)
+    {
+        return toX >= 3 &&
+               toX <= 5 &&
+               toY >= 7 &&
+               toY <= 9;
+    }
+
+    return toX >= 3 &&
+           toX <= 5 &&
+           toY >= 0 &&
+           toY <= 2;
+}
+
+bool RuleEngine::validateElephant(
+    int fromX,
+    int fromY,
+    int toX,
+    int toY) const
+{
+    int dx = toX - fromX;
+    int dy = toY - fromY;
+
+    if(std::abs(dx) != 2 ||
+        std::abs(dy) != 2)
+    {
+        return false;
+    }
+
+    int eyeX = fromX + dx / 2;
+    int eyeY = fromY + dy / 2;
+
+    if(!board.getPiece(
+                  eyeX,
+                  eyeY).isEmpty())
+    {
+        return false;
+    }
+
+    Piece elephant =
+        board.getPiece(fromX,fromY);
+
+    if(elephant.side == Xiangqi::SIDE_RED)
+    {
+        if(toY < 5)
+            return false;
+    }
+    else
+    {
+        if(toY > 4)
+            return false;
+    }
+
+    return true;
+}
+
+bool RuleEngine::kingsFaceToFaceAfterMove(
+    int fromX,
+    int fromY,
+    int toX,
+    int toY) const
+{
+    int redX=-1,redY=-1;
+    int blackX=-1,blackY=-1;
+
+    for(int y=0;y<10;y++)
+    {
+        for(int x=0;x<9;x++)
+        {
+            Piece p =
+                board.getPiece(x,y);
+
+            if(x==fromX && y==fromY)
+            {
+                p = Piece();
+            }
+
+            if(x==toX && y==toY)
+            {
+                p = board.getPiece(
+                    fromX,
+                    fromY);
+            }
+
+            if(p.type ==
+                Xiangqi::TYPE_KING)
+            {
+                if(p.side ==
+                    Xiangqi::SIDE_RED)
+                {
+                    redX=x;
+                    redY=y;
+                }
+                else
+                {
+                    blackX=x;
+                    blackY=y;
+                }
+            }
+        }
+    }
+
+    if(redX != blackX)
+    {
+        return false;
+    }
+
+    int minY =
+        std::min(redY,blackY);
+
+    int maxY =
+        std::max(redY,blackY);
+
+    for(int y=minY+1;
+         y<maxY;
+         y++)
+    {
+        if(!board.getPiece(
+                      redX,
+                      y).isEmpty())
+        {
+            return false;
+        }
+    }
+
+    return true;
 }

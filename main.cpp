@@ -5,13 +5,10 @@ int main()
 {
     RuleEngine engine;
 
-    Piece p = engine.queryPiece(0,0);
-
     std::cout
-        << "side="
-        << p.side
-        << " type="
-        << p.type
+        << engine.isValidMove(
+               6,5,
+               8,3)
         << std::endl;
 
     return 0;
