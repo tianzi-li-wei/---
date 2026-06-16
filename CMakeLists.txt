@@ -20,6 +20,10 @@ qt_add_executable(appXiangqi
     core/ChessBoard.cpp
     core/RuleEngine.h
     core/RuleEngine.cpp
+    controller/BoardModel.h
+    controller/BoardModel.cpp
+    controller/GameController.h
+    controller/GameController.cpp
 
     controller/README.md
     network/README.md
@@ -30,6 +34,8 @@ qt_add_qml_module(appXiangqi
     VERSION 1.0
     QML_FILES
             qml/Main.qml
+            SOURCES controller/BoardModel.h controller/BoardModel.cpp
+            SOURCES controller/GameController.h controller/GameController.cpp
 
 )
 target_compile_features(appXiangqi PRIVATE cxx_std_23)
