@@ -24,18 +24,14 @@ qt_add_executable(appXiangqi
     controller/BoardModel.cpp
     controller/GameController.h
     controller/GameController.cpp
-
-    controller/README.md
     network/README.md
-    docs/interface.md
+
 )
 qt_add_qml_module(appXiangqi
     URI Xiangqi
     VERSION 1.0
     QML_FILES
             qml/Main.qml
-            SOURCES controller/BoardModel.h controller/BoardModel.cpp
-            SOURCES controller/GameController.h controller/GameController.cpp
 
 )
 target_compile_features(appXiangqi PRIVATE cxx_std_23)

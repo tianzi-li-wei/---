@@ -213,13 +213,9 @@ ApplicationWindow {
                         onTapped: {
                             board.selectedPieceIndex = index
 
-                            console.log("Clicked piece:",
-                                        model.text,
-                                        "col:", model.col,
-                                        "row:", model.row)
+                            gameController.handleQmlClick(model.col, model.row)
                         }
                     }
-
                     Behavior on scale {
                         NumberAnimation {
                             duration: 120
@@ -249,9 +245,7 @@ ApplicationWindow {
 
                     board.selectedPieceIndex = -1
 
-                    console.log("Clicked board:",
-                                "col:", col,
-                                "row:", row)
+                    gameController.handleQmlClick(col, row)
                 }
             }
         }

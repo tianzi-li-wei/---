@@ -5,18 +5,16 @@ BoardModel::BoardModel(QObject *parent)
 {
     m_cells.resize(90);
 
-    for (int y = 0; y < 10; ++y)
+    for (int row = 0; row < 10; ++row)
     {
-        for (int x = 0; x < 9; ++x)
+        for (int col = 0; col < 9; ++col)
         {
-            int idx = indexFromXY(x, y);
-
-            m_cells[idx].row = y;
-            m_cells[idx].col = x;
-            m_cells[idx].side = 0;
-            m_cells[idx].type = 0;
-            m_cells[idx].text = "";
-            m_cells[idx].selected = false;
+            int i = indexOf(col, row);
+            m_cells[i].col = col;
+            m_cells[i].row = row;
+            m_cells[i].side = 0;
+            m_cells[i].type = 0;
+            m_cells[i].selected = false;
         }
     }
 }
@@ -31,34 +29,29 @@ int BoardModel::rowCount(const QModelIndex &parent) const
     return m_cells.size();
 }
 
-QVariant BoardModel::data(
-    const QModelIndex &index,
-    int role) const
+QVariant BoardModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid())
     {
-        return {};
+        return QVariant();
     }
 
-    int rowIndex = index.row();
+    int i = index.row();
 
-    if (rowIndex < 0 || rowIndex >= m_cells.size())
+    if (i < 0 || i >= m_cells.size())
     {
-        return {};
+        return QVariant();
     }
 
-    const CellData &cell = m_cells[rowIndex];
+    const CellData &cell = m_cells[i];
 
     switch (role)
     {
-    case RowRole:
-        return cell.row;
-
     case ColRole:
         return cell.col;
 
-    case IndexRole:
-        return cell.row * 9 + cell.col;
+    case RowRole:
+        return cell.row;
 
     case SideRole:
         return cell.side;
@@ -67,79 +60,86 @@ QVariant BoardModel::data(
         return cell.type;
 
     case TextRole:
-        return cell.text;
+        return textForPiece(cell.side, cell.type);
 
     case SelectedRole:
         return cell.selected;
 
     default:
-        return {};
+        return QVariant();
     }
 }
 
 QHash<int, QByteArray> BoardModel::roleNames() const
 {
-    return {
-        { RowRole, "row" },
-        { ColRole, "col" },
-        { IndexRole, "index" },
-        { SideRole, "side" },
-        { TypeRole, "type" },
-        { TextRole, "text" },
-        { SelectedRole, "selected" }
-    };
+    QHash<int, QByteArray> roles;
+
+    roles[ColRole] = "col";
+    roles[RowRole] = "row";
+    roles[SideRole] = "side";
+    roles[TypeRole] = "type";
+    roles[TextRole] = "text";
+    roles[SelectedRole] = "selected";
+
+    return roles;
 }
 
-void BoardModel::setCell(
-    int x,
-    int y,
-    int side,
-    int type)
+CellData BoardModel::getCellAt(int col, int row) const
 {
-    if (x < 0 || x >= 9 || y < 0 || y >= 10)
+    if (col < 0 || col >= 9 || row < 0 || row >= 10)
+    {
+        return CellData();
+    }
+
+    return m_cells[indexOf(col, row)];
+}
+
+void BoardModel::setCell(int col, int row, int side, int type)
+{
+    if (col < 0 || col >= 9 || row < 0 || row >= 10)
     {
         return;
     }
 
-    int idx = indexFromXY(x, y);
+    int i = indexOf(col, row);
 
-    m_cells[idx].side = side;
-    m_cells[idx].type = type;
-    m_cells[idx].text = pieceText(side, type);
+    m_cells[i].side = side;
+    m_cells[i].type = type;
 
-    QModelIndex modelIndex = createIndex(idx, 0);
-
-    emit dataChanged(
-        modelIndex,
-        modelIndex,
-        {
-            SideRole,
-            TypeRole,
-            TextRole
-        });
+    QModelIndex modelIndex = createIndex(i, 0);
+    emit dataChanged(modelIndex, modelIndex);
 }
 
-void BoardModel::setSelected(
-    int x,
-    int y)
+void BoardModel::clearBoard()
+{
+    for (int i = 0; i < m_cells.size(); ++i)
+    {
+        m_cells[i].side = 0;
+        m_cells[i].type = 0;
+        m_cells[i].selected = false;
+    }
+
+    if (!m_cells.isEmpty())
+    {
+        emit dataChanged(createIndex(0, 0),
+                         createIndex(m_cells.size() - 1, 0));
+    }
+}
+
+void BoardModel::setSelected(int col, int row)
 {
     clearSelected();
 
-    if (x < 0 || x >= 9 || y < 0 || y >= 10)
+    if (col < 0 || col >= 9 || row < 0 || row >= 10)
     {
         return;
     }
 
-    int idx = indexFromXY(x, y);
+    int i = indexOf(col, row);
+    m_cells[i].selected = true;
 
-    m_cells[idx].selected = true;
-
-    QModelIndex modelIndex = createIndex(idx, 0);
-
-    emit dataChanged(
-        modelIndex,
-        modelIndex,
-        { SelectedRole });
+    QModelIndex modelIndex = createIndex(i, 0);
+    emit dataChanged(modelIndex, modelIndex);
 }
 
 void BoardModel::clearSelected()
@@ -151,76 +151,23 @@ void BoardModel::clearSelected()
             m_cells[i].selected = false;
 
             QModelIndex modelIndex = createIndex(i, 0);
-
-            emit dataChanged(
-                modelIndex,
-                modelIndex,
-                { SelectedRole });
+            emit dataChanged(modelIndex, modelIndex);
         }
     }
 }
 
-void BoardModel::refreshAll()
+int BoardModel::indexOf(int col, int row) const
 {
-    if (m_cells.isEmpty())
-    {
-        return;
-    }
-
-    QModelIndex topLeft = createIndex(0, 0);
-    QModelIndex bottomRight = createIndex(m_cells.size() - 1, 0);
-
-    emit dataChanged(
-        topLeft,
-        bottomRight,
-        {
-            RowRole,
-            ColRole,
-            IndexRole,
-            SideRole,
-            TypeRole,
-            TextRole,
-            SelectedRole
-        });
+    return row * 9 + col;
 }
 
-int BoardModel::indexFromXY(
-    int x,
-    int y) const
-{
-    return y * 9 + x;
-}
-
-// 新增：根据棋盘坐标获取格子数据
-CellData BoardModel::getCellAt(
-    int x,
-    int y) const
-{
-    if (x < 0 || x >= 9 || y < 0 || y >= 10)
-    {
-        return CellData{};
-    }
-
-    int idx = indexFromXY(x, y);
-
-    if (idx < 0 || idx >= m_cells.size())
-    {
-        return CellData{};
-    }
-
-    return m_cells[idx];
-}
-
-QString BoardModel::pieceText(
-    int side,
-    int type) const
+QString BoardModel::textForPiece(int side, int type) const
 {
     if (side == 0 || type == 0)
     {
         return "";
     }
 
-    // side: 1 红方
     if (side == 1)
     {
         switch (type)
@@ -234,7 +181,7 @@ QString BoardModel::pieceText(
         case 4:
             return "马";
         case 5:
-            return "车";
+            return "車";
         case 6:
             return "炮";
         case 7:
@@ -244,7 +191,6 @@ QString BoardModel::pieceText(
         }
     }
 
-    // side: 2 黑方
     if (side == 2)
     {
         switch (type)
@@ -258,7 +204,7 @@ QString BoardModel::pieceText(
         case 4:
             return "马";
         case 5:
-            return "车";
+            return "車";
         case 6:
             return "炮";
         case 7:

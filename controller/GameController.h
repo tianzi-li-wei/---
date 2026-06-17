@@ -1,20 +1,26 @@
 #ifndef GAMECONTROLLER_H
 #define GAMECONTROLLER_H
 
-// 引入你需要的头文件，不是包含自己！
-#include "BoardModel.h"
+#include <QObject>
+#include <QDebug>
 #include <QString>
 
-// 类声明
-class GameController
+#include "BoardModel.h"
+
+class GameController : public QObject
 {
+    Q_OBJECT
+
 public:
-    // 函数声明
+    explicit GameController(BoardModel *boardModel,
+                            QObject *parent = nullptr);
+
     void syncBoardFromEngine();
-    void handleQmlClick(int x, int y);
+
+    Q_INVOKABLE void handleQmlClick(int x, int y);
 
 private:
-    BoardModel* m_boardModel = nullptr; // 你的成员变量，和你项目对应即可
+    BoardModel *m_boardModel = nullptr;
 };
 
 #endif // GAMECONTROLLER_H
