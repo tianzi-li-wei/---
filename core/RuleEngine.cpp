@@ -2,10 +2,17 @@
 #include"Constants.h"
 #include <cstdlib>
 #include<algorithm>
-
 RuleEngine::RuleEngine()
 {
     initializeBoard();
+
+    currentSide =
+        Xiangqi::SIDE_RED;
+}
+
+int RuleEngine::currentPlayer() const
+{
+    return currentSide;
 }
 
 void RuleEngine::initializeBoard()
@@ -108,6 +115,16 @@ MoveResult RuleEngine::movePiece(
 {
     MoveResult result;
 
+    Piece moving =
+        board.getPiece(
+            fromX,
+            fromY);
+
+    if(moving.side != currentSide)
+    {
+        return result;
+    }
+
     if(!isValidMove(
             fromX,
             fromY,
@@ -116,11 +133,6 @@ MoveResult RuleEngine::movePiece(
     {
         return result;
     }
-
-    Piece moving =
-        board.getPiece(
-            fromX,
-            fromY);
 
     Piece target =
         board.getPiece(
@@ -138,6 +150,26 @@ MoveResult RuleEngine::movePiece(
         Piece());
 
     result.success = true;
+    int winner;
+
+    if(isGameOver(winner))
+    {
+        result.gameOver = true;
+
+        result.winner = winner;
+    }
+
+    if(currentSide ==
+        Xiangqi::SIDE_RED)
+    {
+        currentSide =
+            Xiangqi::SIDE_BLACK;
+    }
+    else
+    {
+        currentSide =
+            Xiangqi::SIDE_RED;
+    }
 
     if(target.type ==
         Xiangqi::TYPE_KING)
@@ -152,6 +184,51 @@ MoveResult RuleEngine::movePiece(
 bool RuleEngine::isGameOver(
     int& winner) const
 {
+    bool redKing = false;
+    bool blackKing = false;
+
+    for(int y = 0; y < 10; y++)
+    {
+        for(int x = 0; x < 9; x++)
+        {
+            Piece p =
+                board.getPiece(x,y);
+
+            if(p.type != Xiangqi::TYPE_KING)
+            {
+                continue;
+            }
+
+            if(p.side ==
+                Xiangqi::SIDE_RED)
+            {
+                redKing = true;
+            }
+
+            if(p.side ==
+                Xiangqi::SIDE_BLACK)
+            {
+                blackKing = true;
+            }
+        }
+    }
+
+    if(!redKing)
+    {
+        winner =
+            Xiangqi::SIDE_BLACK;
+
+        return true;
+    }
+
+    if(!blackKing)
+    {
+        winner =
+            Xiangqi::SIDE_RED;
+
+        return true;
+    }
+
     winner = 0;
 
     return false;
