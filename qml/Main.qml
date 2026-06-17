@@ -44,19 +44,6 @@ ApplicationWindow {
             property real cellW: gridWidth / 8
             property real cellH: gridHeight / 9
             property real pieceSize: Math.min(cellW, cellH) * 0.72
-            property int selectedPieceIndex: -1
-
-            function pieceIndexAt(col, row) {
-                for (var i = 0; i < pieceModel.count; i++) {
-                    var piece = pieceModel.get(i)
-
-                    if (piece.col === col && piece.row === row) {
-                        return i
-                    }
-                }
-
-                return -1
-            }
 
             Canvas {
                 id: chessBoardCanvas
@@ -80,7 +67,6 @@ ApplicationWindow {
                     ctx.strokeStyle = "brown"
                     ctx.lineWidth = 2
 
-                    // Draw horizontal lines
                     for (var r = 0; r < rows; r++) {
                         ctx.beginPath()
                         ctx.moveTo(0, r * cellH)
@@ -88,7 +74,6 @@ ApplicationWindow {
                         ctx.stroke()
                     }
 
-                    // Draw vertical lines
                     for (var c = 0; c < cols; c++) {
                         var x = c * cellW
 
@@ -108,7 +93,7 @@ ApplicationWindow {
                         ctx.stroke()
                     }
 
-                    // Top palace
+                    // 上方九宫格
                     ctx.beginPath()
                     ctx.moveTo(3 * cellW, 0)
                     ctx.lineTo(5 * cellW, 2 * cellH)
@@ -116,7 +101,7 @@ ApplicationWindow {
                     ctx.lineTo(3 * cellW, 2 * cellH)
                     ctx.stroke()
 
-                    // Bottom palace
+                    // 下方九宫格
                     ctx.beginPath()
                     ctx.moveTo(3 * cellW, 7 * cellH)
                     ctx.lineTo(5 * cellW, 9 * cellH)
@@ -124,7 +109,7 @@ ApplicationWindow {
                     ctx.lineTo(3 * cellW, 9 * cellH)
                     ctx.stroke()
 
-                    // River text
+                    // 楚河汉界
                     ctx.fillStyle = "brown"
                     ctx.font = "bold 28px sans-serif"
                     ctx.textAlign = "center"
@@ -135,57 +120,13 @@ ApplicationWindow {
                 }
             }
 
-            ListModel {
-                id: pieceModel
-
-                // Black side
-                ListElement { col: 0; row: 0; side: "black"; text: "車" }
-                ListElement { col: 1; row: 0; side: "black"; text: "马" }
-                ListElement { col: 2; row: 0; side: "black"; text: "象" }
-                ListElement { col: 3; row: 0; side: "black"; text: "士" }
-                ListElement { col: 4; row: 0; side: "black"; text: "将" }
-                ListElement { col: 5; row: 0; side: "black"; text: "士" }
-                ListElement { col: 6; row: 0; side: "black"; text: "象" }
-                ListElement { col: 7; row: 0; side: "black"; text: "马" }
-                ListElement { col: 8; row: 0; side: "black"; text: "車" }
-
-                ListElement { col: 1; row: 2; side: "black"; text: "炮" }
-                ListElement { col: 7; row: 2; side: "black"; text: "炮" }
-
-                ListElement { col: 0; row: 3; side: "black"; text: "卒" }
-                ListElement { col: 2; row: 3; side: "black"; text: "卒" }
-                ListElement { col: 4; row: 3; side: "black"; text: "卒" }
-                ListElement { col: 6; row: 3; side: "black"; text: "卒" }
-                ListElement { col: 8; row: 3; side: "black"; text: "卒" }
-
-                // Red side
-                ListElement { col: 0; row: 9; side: "red"; text: "車" }
-                ListElement { col: 1; row: 9; side: "red"; text: "马" }
-                ListElement { col: 2; row: 9; side: "red"; text: "相" }
-                ListElement { col: 3; row: 9; side: "red"; text: "仕" }
-                ListElement { col: 4; row: 9; side: "red"; text: "帅" }
-                ListElement { col: 5; row: 9; side: "red"; text: "仕" }
-                ListElement { col: 6; row: 9; side: "red"; text: "相" }
-                ListElement { col: 7; row: 9; side: "red"; text: "马" }
-                ListElement { col: 8; row: 9; side: "red"; text: "車" }
-
-                ListElement { col: 1; row: 7; side: "red"; text: "炮" }
-                ListElement { col: 7; row: 7; side: "red"; text: "炮" }
-
-                ListElement { col: 0; row: 6; side: "red"; text: "兵" }
-                ListElement { col: 2; row: 6; side: "red"; text: "兵" }
-                ListElement { col: 4; row: 6; side: "red"; text: "兵" }
-                ListElement { col: 6; row: 6; side: "red"; text: "兵" }
-                ListElement { col: 8; row: 6; side: "red"; text: "兵" }
-            }
-
             Repeater {
-                model: pieceModel
+                model: boardModel
 
                 Rectangle {
                     id: piece
 
-                    property bool selected: index === board.selectedPieceIndex
+                    visible: model.side !== 0
 
                     width: board.pieceSize
                     height: board.pieceSize
@@ -194,28 +135,21 @@ ApplicationWindow {
                     x: board.boardMargin + model.col * board.cellW - width / 2
                     y: board.boardMargin + model.row * board.cellH - height / 2
 
-                    scale: selected ? 1.12 : 1.0
-                    z: selected ? 2 : 1
+                    scale: model.selected ? 1.12 : 1.0
+                    z: model.selected ? 2 : 1
 
-                    color: selected ? "yellow" : "white"
-                    border.width: selected ? 4 : 2
-                    border.color: model.side === "red" ? "red" : "black"
+                    color: model.selected ? "yellow" : "white"
+                    border.width: model.selected ? 4 : 2
+                    border.color: model.side === 1 ? "red" : "black"
 
                     Text {
                         anchors.centerIn: parent
                         text: model.text
-                        color: model.side === "red" ? "red" : "black"
+                        color: model.side === 1 ? "red" : "black"
                         font.pixelSize: parent.width * 0.5
                         font.bold: true
                     }
 
-                    TapHandler {
-                        onTapped: {
-                            board.selectedPieceIndex = index
-
-                            gameController.handleQmlClick(model.col, model.row)
-                        }
-                    }
                     Behavior on scale {
                         NumberAnimation {
                             duration: 120
@@ -236,14 +170,6 @@ ApplicationWindow {
 
                     var col = Math.round(localX / board.cellW)
                     var row = Math.round(localY / board.cellH)
-
-                    var pieceIndex = board.pieceIndexAt(col, row)
-
-                    if (pieceIndex >= 0) {
-                        return
-                    }
-
-                    board.selectedPieceIndex = -1
 
                     gameController.handleQmlClick(col, row)
                 }

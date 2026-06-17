@@ -38,7 +38,7 @@ public:
 
     QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE CellData getCellAt(int col, int row) const;
+    CellData getCellAt(int col, int row) const;
 
     void setCell(int col, int row, int side, int type);
     void clearBoard();

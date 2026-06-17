@@ -10,6 +10,7 @@ BoardModel::BoardModel(QObject *parent)
         for (int col = 0; col < 9; ++col)
         {
             int i = indexOf(col, row);
+
             m_cells[i].col = col;
             m_cells[i].row = row;
             m_cells[i].side = 0;
@@ -107,7 +108,10 @@ void BoardModel::setCell(int col, int row, int side, int type)
     m_cells[i].type = type;
 
     QModelIndex modelIndex = createIndex(i, 0);
-    emit dataChanged(modelIndex, modelIndex);
+
+    emit dataChanged(modelIndex,
+                     modelIndex,
+                     { SideRole, TypeRole, TextRole });
 }
 
 void BoardModel::clearBoard()
@@ -136,10 +140,14 @@ void BoardModel::setSelected(int col, int row)
     }
 
     int i = indexOf(col, row);
+
     m_cells[i].selected = true;
 
     QModelIndex modelIndex = createIndex(i, 0);
-    emit dataChanged(modelIndex, modelIndex);
+
+    emit dataChanged(modelIndex,
+                     modelIndex,
+                     { SelectedRole });
 }
 
 void BoardModel::clearSelected()
@@ -151,7 +159,10 @@ void BoardModel::clearSelected()
             m_cells[i].selected = false;
 
             QModelIndex modelIndex = createIndex(i, 0);
-            emit dataChanged(modelIndex, modelIndex);
+
+            emit dataChanged(modelIndex,
+                             modelIndex,
+                             { SelectedRole });
         }
     }
 }
