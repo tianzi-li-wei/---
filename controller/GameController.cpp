@@ -1,31 +1,197 @@
 #include "GameController.h"
 
-// 就是你原来写的这些实现代码，直接放这里
-// 同步棋盘数据从引擎到UI的方法
+GameController::GameController(BoardModel *boardModel,
+                               QObject *parent)
+    : QObject(parent),
+    m_boardModel(boardModel)
+{
+    syncBoardFromEngine();
+    setStatusText("红方先行");
+}
+
+QString GameController::statusText() const
+{
+    return m_statusText;
+}
+
+int GameController::currentSide() const
+{
+    return m_ruleEngine.currentPlayer();
+}
+
+bool GameController::gameOver() const
+{
+    return m_gameOver;
+}
+
+void GameController::resetGame()
+{
+    m_ruleEngine.initializeBoard();
+
+    m_selectedCol = -1;
+    m_selectedRow = -1;
+
+    setGameOver(false);
+
+    if (m_boardModel)
+    {
+        m_boardModel->clearSelected();
+    }
+
+    syncBoardFromEngine();
+
+    emit currentSideChanged();
+
+    setStatusText("新游戏开始，红方先行");
+}
+
+void GameController::handleQmlClick(int col, int row)
+{
+    qDebug() << "QML clicked:" << col << row;
+
+    if (!m_boardModel)
+    {
+        qDebug() << "BoardModel is null";
+        return;
+    }
+
+    if (m_gameOver)
+    {
+        setStatusText("游戏已经结束，请点击重新开始");
+        return;
+    }
+
+    CellData clickedCell = m_boardModel->getCellAt(col, row);
+    int current = m_ruleEngine.currentPlayer();
+
+    if (m_selectedCol < 0 || m_selectedRow < 0)
+    {
+        if (clickedCell.side == 0)
+        {
+            setStatusText(QString("%1走棋，请选择自己的棋子")
+                              .arg(sideName(current)));
+            return;
+        }
+
+        if (clickedCell.side != current)
+        {
+            setStatusText(QString("现在是%1回合，不能选择%2棋子")
+                              .arg(sideName(current), sideName(clickedCell.side)));
+            return;
+        }
+
+        m_selectedCol = col;
+        m_selectedRow = row;
+
+        m_boardModel->setSelected(col, row);
+
+        setStatusText(QString("已选择%1棋子：%2")
+                          .arg(sideName(clickedCell.side), clickedCell.text));
+
+        return;
+    }
+
+    if (clickedCell.side == current)
+    {
+        m_selectedCol = col;
+        m_selectedRow = row;
+
+        m_boardModel->setSelected(col, row);
+
+        setStatusText(QString("已重新选择%1棋子：%2")
+                          .arg(sideName(clickedCell.side), clickedCell.text));
+
+        return;
+    }
+
+    MoveResult result = m_ruleEngine.movePiece(m_selectedCol,
+                                               m_selectedRow,
+                                               col,
+                                               row);
+
+    if (!result.success)
+    {
+        setStatusText("非法走法，请重新选择目标位置");
+        return;
+    }
+
+    m_selectedCol = -1;
+    m_selectedRow = -1;
+
+    m_boardModel->clearSelected();
+    syncBoardFromEngine();
+
+    emit currentSideChanged();
+
+    if (result.gameOver)
+    {
+        setGameOver(true);
+
+        setStatusText(QString("游戏结束，%1获胜")
+                          .arg(sideName(result.winner)));
+        return;
+    }
+
+    setStatusText(QString("走棋成功，轮到%1")
+                      .arg(sideName(m_ruleEngine.currentPlayer())));
+}
+
 void GameController::syncBoardFromEngine()
 {
     if (!m_boardModel)
+    {
         return;
-    // 你的同步逻辑...
+    }
+
+    m_boardModel->clearBoard();
+
+    for (int row = 0; row < 10; ++row)
+    {
+        for (int col = 0; col < 9; ++col)
+        {
+            Piece piece = m_ruleEngine.queryPiece(col, row);
+
+            m_boardModel->setCell(col,
+                                  row,
+                                  piece.side,
+                                  piece.type);
+        }
+    }
 }
 
-// QML点击处理函数
-void GameController::handleQmlClick(int x, int y)
+void GameController::setStatusText(const QString &text)
 {
-    // 提示已经给你写好了，按你项目改方法名即可
-    CellData piece = m_boardModel->getCellAt(x, y);
-    QString sideText;
-    if (piece.side == 1)
+    if (m_statusText == text)
     {
-        sideText = "红方";
+        return;
     }
-    else if (piece.side == 2)
+
+    m_statusText = text;
+    emit statusTextChanged();
+}
+
+void GameController::setGameOver(bool value)
+{
+    if (m_gameOver == value)
     {
-        sideText = "黑方";
+        return;
     }
-    else
+
+    m_gameOver = value;
+    emit gameOverChanged();
+}
+
+QString GameController::sideName(int side) const
+{
+    if (side == Xiangqi::SIDE_RED)
     {
-        sideText = "未知";
+        return "红方";
     }
-    // 你自己后续的逻辑加在这里就行
+
+    if (side == Xiangqi::SIDE_BLACK)
+    {
+        return "黑方";
+    }
+
+    return "无";
 }

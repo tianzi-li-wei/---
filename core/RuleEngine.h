@@ -35,7 +35,6 @@ private:
 
     ChessBoard board;
 
-private:
     int currentSide;
 
     bool validateRook(

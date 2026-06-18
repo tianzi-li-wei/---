@@ -10,7 +10,7 @@ ApplicationWindow {
     minimumHeight: 680
 
     visible: true
-    title: "Xiangqi - 中国象棋"
+    title: "Xiangqi - 中国象棋 v2"
 
     color: "black"
 
@@ -21,237 +21,200 @@ ApplicationWindow {
         anchors.margins: 20
 
         radius: 16
-        color: "gray"
+        color: "#404040"
         border.color: "white"
         border.width: 1
 
-        Rectangle {
-            id: board
+        Column {
+            anchors.fill: parent
+            anchors.margins: 16
+            spacing: 12
 
-            width: Math.min(parent.width - 100, (parent.height - 100) * 8 / 9)
-            height: width * 9 / 8
+            Row {
+                width: parent.width
+                height: 42
+                spacing: 12
 
-            anchors.centerIn: parent
+                Text {
+                    width: parent.width - resetButton.width - 20
+                    height: parent.height
+                    verticalAlignment: Text.AlignVCenter
 
-            radius: 8
-            color: "orange"
-            border.color: "brown"
-            border.width: 3
-
-            property int boardMargin: 36
-            property real gridWidth: width - boardMargin * 2
-            property real gridHeight: height - boardMargin * 2
-            property real cellW: gridWidth / 8
-            property real cellH: gridHeight / 9
-            property real pieceSize: Math.min(cellW, cellH) * 0.72
-            property int selectedPieceIndex: -1
-
-            function pieceIndexAt(col, row) {
-                for (var i = 0; i < pieceModel.count; i++) {
-                    var piece = pieceModel.get(i)
-
-                    if (piece.col === col && piece.row === row) {
-                        return i
-                    }
+                    text: gameController.statusText
+                    color: "white"
+                    font.pixelSize: 22
+                    font.bold: true
+                    elide: Text.ElideRight
                 }
 
-                return -1
+                Button {
+                    id: resetButton
+
+                    width: 120
+                    height: parent.height
+
+                    text: "重新开始"
+
+                    onClicked: {
+                        gameController.resetGame()
+                    }
+                }
             }
 
-            Canvas {
-                id: chessBoardCanvas
+            Rectangle {
+                id: board
 
-                anchors.fill: parent
-                anchors.margins: board.boardMargin
+                width: Math.min(parent.width - 80, (parent.height - 70) * 8 / 9)
+                height: width * 9 / 8
 
-                onWidthChanged: requestPaint()
-                onHeightChanged: requestPaint()
+                anchors.horizontalCenter: parent.horizontalCenter
 
-                onPaint: {
-                    var ctx = getContext("2d")
-                    ctx.clearRect(0, 0, width, height)
+                radius: 8
+                color: "#d99a32"
+                border.color: "#6b3b12"
+                border.width: 3
 
-                    var rows = 10
-                    var cols = 9
+                property int boardMargin: 36
+                property real gridWidth: width - boardMargin * 2
+                property real gridHeight: height - boardMargin * 2
+                property real cellW: gridWidth / 8
+                property real cellH: gridHeight / 9
+                property real pieceSize: Math.min(cellW, cellH) * 0.72
 
-                    var cellW = width / (cols - 1)
-                    var cellH = height / (rows - 1)
+                Canvas {
+                    id: chessBoardCanvas
 
-                    ctx.strokeStyle = "brown"
-                    ctx.lineWidth = 2
+                    anchors.fill: parent
+                    anchors.margins: board.boardMargin
 
-                    // Draw horizontal lines
-                    for (var r = 0; r < rows; r++) {
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
+
+                        var rows = 10
+                        var cols = 9
+
+                        var cellW = width / (cols - 1)
+                        var cellH = height / (rows - 1)
+
+                        ctx.strokeStyle = "#5a2e0c"
+                        ctx.lineWidth = 2
+
+                        for (var r = 0; r < rows; r++) {
+                            ctx.beginPath()
+                            ctx.moveTo(0, r * cellH)
+                            ctx.lineTo(width, r * cellH)
+                            ctx.stroke()
+                        }
+
+                        for (var c = 0; c < cols; c++) {
+                            var x = c * cellW
+
+                            ctx.beginPath()
+
+                            if (c === 0 || c === cols - 1) {
+                                ctx.moveTo(x, 0)
+                                ctx.lineTo(x, height)
+                            } else {
+                                ctx.moveTo(x, 0)
+                                ctx.lineTo(x, 4 * cellH)
+
+                                ctx.moveTo(x, 5 * cellH)
+                                ctx.lineTo(x, height)
+                            }
+
+                            ctx.stroke()
+                        }
+
                         ctx.beginPath()
-                        ctx.moveTo(0, r * cellH)
-                        ctx.lineTo(width, r * cellH)
+                        ctx.moveTo(3 * cellW, 0)
+                        ctx.lineTo(5 * cellW, 2 * cellH)
+                        ctx.moveTo(5 * cellW, 0)
+                        ctx.lineTo(3 * cellW, 2 * cellH)
                         ctx.stroke()
-                    }
-
-                    // Draw vertical lines
-                    for (var c = 0; c < cols; c++) {
-                        var x = c * cellW
 
                         ctx.beginPath()
-
-                        if (c === 0 || c === cols - 1) {
-                            ctx.moveTo(x, 0)
-                            ctx.lineTo(x, height)
-                        } else {
-                            ctx.moveTo(x, 0)
-                            ctx.lineTo(x, 4 * cellH)
-
-                            ctx.moveTo(x, 5 * cellH)
-                            ctx.lineTo(x, height)
-                        }
-
+                        ctx.moveTo(3 * cellW, 7 * cellH)
+                        ctx.lineTo(5 * cellW, 9 * cellH)
+                        ctx.moveTo(5 * cellW, 7 * cellH)
+                        ctx.lineTo(3 * cellW, 9 * cellH)
                         ctx.stroke()
+
+                        ctx.fillStyle = "#5a2e0c"
+                        ctx.font = "bold 28px sans-serif"
+                        ctx.textAlign = "center"
+                        ctx.textBaseline = "middle"
+
+                        ctx.fillText("楚 河", width * 0.28, 4.5 * cellH)
+                        ctx.fillText("汉 界", width * 0.72, 4.5 * cellH)
                     }
-
-                    // Top palace
-                    ctx.beginPath()
-                    ctx.moveTo(3 * cellW, 0)
-                    ctx.lineTo(5 * cellW, 2 * cellH)
-                    ctx.moveTo(5 * cellW, 0)
-                    ctx.lineTo(3 * cellW, 2 * cellH)
-                    ctx.stroke()
-
-                    // Bottom palace
-                    ctx.beginPath()
-                    ctx.moveTo(3 * cellW, 7 * cellH)
-                    ctx.lineTo(5 * cellW, 9 * cellH)
-                    ctx.moveTo(5 * cellW, 7 * cellH)
-                    ctx.lineTo(3 * cellW, 9 * cellH)
-                    ctx.stroke()
-
-                    // River text
-                    ctx.fillStyle = "brown"
-                    ctx.font = "bold 28px sans-serif"
-                    ctx.textAlign = "center"
-                    ctx.textBaseline = "middle"
-
-                    ctx.fillText("楚 河", width * 0.28, 4.5 * cellH)
-                    ctx.fillText("汉 界", width * 0.72, 4.5 * cellH)
                 }
-            }
 
-            ListModel {
-                id: pieceModel
+                Repeater {
+                    model: boardModel
 
-                // Black side
-                ListElement { col: 0; row: 0; side: "black"; text: "車" }
-                ListElement { col: 1; row: 0; side: "black"; text: "马" }
-                ListElement { col: 2; row: 0; side: "black"; text: "象" }
-                ListElement { col: 3; row: 0; side: "black"; text: "士" }
-                ListElement { col: 4; row: 0; side: "black"; text: "将" }
-                ListElement { col: 5; row: 0; side: "black"; text: "士" }
-                ListElement { col: 6; row: 0; side: "black"; text: "象" }
-                ListElement { col: 7; row: 0; side: "black"; text: "马" }
-                ListElement { col: 8; row: 0; side: "black"; text: "車" }
+                    Rectangle {
+                        id: piece
 
-                ListElement { col: 1; row: 2; side: "black"; text: "炮" }
-                ListElement { col: 7; row: 2; side: "black"; text: "炮" }
+                        visible: model.side !== 0
 
-                ListElement { col: 0; row: 3; side: "black"; text: "卒" }
-                ListElement { col: 2; row: 3; side: "black"; text: "卒" }
-                ListElement { col: 4; row: 3; side: "black"; text: "卒" }
-                ListElement { col: 6; row: 3; side: "black"; text: "卒" }
-                ListElement { col: 8; row: 3; side: "black"; text: "卒" }
+                        width: board.pieceSize
+                        height: board.pieceSize
+                        radius: width / 2
 
-                // Red side
-                ListElement { col: 0; row: 9; side: "red"; text: "車" }
-                ListElement { col: 1; row: 9; side: "red"; text: "马" }
-                ListElement { col: 2; row: 9; side: "red"; text: "相" }
-                ListElement { col: 3; row: 9; side: "red"; text: "仕" }
-                ListElement { col: 4; row: 9; side: "red"; text: "帅" }
-                ListElement { col: 5; row: 9; side: "red"; text: "仕" }
-                ListElement { col: 6; row: 9; side: "red"; text: "相" }
-                ListElement { col: 7; row: 9; side: "red"; text: "马" }
-                ListElement { col: 8; row: 9; side: "red"; text: "車" }
+                        x: board.boardMargin + model.col * board.cellW - width / 2
+                        y: board.boardMargin + model.row * board.cellH - height / 2
 
-                ListElement { col: 1; row: 7; side: "red"; text: "炮" }
-                ListElement { col: 7; row: 7; side: "red"; text: "炮" }
+                        scale: model.selected ? 1.12 : 1.0
+                        z: model.selected ? 3 : 2
 
-                ListElement { col: 0; row: 6; side: "red"; text: "兵" }
-                ListElement { col: 2; row: 6; side: "red"; text: "兵" }
-                ListElement { col: 4; row: 6; side: "red"; text: "兵" }
-                ListElement { col: 6; row: 6; side: "red"; text: "兵" }
-                ListElement { col: 8; row: 6; side: "red"; text: "兵" }
-            }
+                        color: model.selected ? "#ffeb3b" : "#fff7dd"
+                        border.width: model.selected ? 4 : 2
+                        border.color: model.side === 1 ? "red" : "black"
 
-            Repeater {
-                model: pieceModel
+                        Text {
+                            anchors.centerIn: parent
 
-                Rectangle {
-                    id: piece
+                            text: model.text
+                            color: model.side === 1 ? "red" : "black"
 
-                    property bool selected: index === board.selectedPieceIndex
-
-                    width: board.pieceSize
-                    height: board.pieceSize
-                    radius: width / 2
-
-                    x: board.boardMargin + model.col * board.cellW - width / 2
-                    y: board.boardMargin + model.row * board.cellH - height / 2
-
-                    scale: selected ? 1.12 : 1.0
-                    z: selected ? 2 : 1
-
-                    color: selected ? "yellow" : "white"
-                    border.width: selected ? 4 : 2
-                    border.color: model.side === "red" ? "red" : "black"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: model.text
-                        color: model.side === "red" ? "red" : "black"
-                        font.pixelSize: parent.width * 0.5
-                        font.bold: true
-                    }
-
-                    TapHandler {
-                        onTapped: {
-                            board.selectedPieceIndex = index
-
-                            console.log("Clicked piece:",
-                                        model.text,
-                                        "col:", model.col,
-                                        "row:", model.row)
+                            font.pixelSize: parent.width * 0.5
+                            font.bold: true
                         }
-                    }
 
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 120
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: 120
+                            }
                         }
                     }
                 }
-            }
 
-            TapHandler {
-                onTapped: function(eventPoint, button) {
-                    var localX = eventPoint.position.x - board.boardMargin
-                    var localY = eventPoint.position.y - board.boardMargin
+                MouseArea {
+                    anchors.fill: parent
+                    z: 20
 
-                    if (localX < 0 || localX > board.gridWidth ||
-                        localY < 0 || localY > board.gridHeight) {
-                        return
+                    onClicked: function(mouse) {
+                        var localX = mouse.x - board.boardMargin
+                        var localY = mouse.y - board.boardMargin
+
+                        if (localX < 0 || localX > board.gridWidth ||
+                            localY < 0 || localY > board.gridHeight) {
+                            return
+                        }
+
+                        var col = Math.round(localX / board.cellW)
+                        var row = Math.round(localY / board.cellH)
+
+                        if (col < 0 || col > 8 || row < 0 || row > 9) {
+                            return
+                        }
+
+                        gameController.handleQmlClick(col, row)
                     }
-
-                    var col = Math.round(localX / board.cellW)
-                    var row = Math.round(localY / board.cellH)
-
-                    var pieceIndex = board.pieceIndexAt(col, row)
-
-                    if (pieceIndex >= 0) {
-                        return
-                    }
-
-                    board.selectedPieceIndex = -1
-
-                    console.log("Clicked board:",
-                                "col:", col,
-                                "row:", row)
                 }
             }
         }
