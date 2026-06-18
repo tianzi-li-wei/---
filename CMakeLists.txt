@@ -31,8 +31,9 @@ qt_add_qml_module(appXiangqi
     URI Xiangqi
     VERSION 1.0
     QML_FILES
-            qml/Main.qml
-
+        qml/Main.qml
+        qml/BoardView.qml
+        qml/PieceItem.qml
 )
 target_compile_features(appXiangqi PRIVATE cxx_std_23)
 target_link_libraries(appXiangqi

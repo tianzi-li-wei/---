@@ -10,9 +10,45 @@ ApplicationWindow {
     minimumHeight: 680
 
     visible: true
-    title: "Xiangqi - 中国象棋 v2"
+    title: "Xiangqi - 中国象棋"
 
-    color: "black"
+    color: "#202020"
+
+    property bool gameOverDialogClosed: false
+
+    function currentSideText(side) {
+        if (side === 1) {
+            return "红方回合"
+        }
+
+        if (side === 2) {
+            return "黑方回合"
+        }
+
+        return "等待开始"
+    }
+
+    function currentSideColor(side) {
+        if (side === 1) {
+            return "#ff8a80"
+        }
+
+        if (side === 2) {
+            return "#e0e0e0"
+        }
+
+        return "#ffcc80"
+    }
+
+    Connections {
+        target: gameController
+
+        function onGameOverChanged() {
+            if (gameController.gameOver) {
+                window.gameOverDialogClosed = false
+            }
+        }
+    }
 
     Rectangle {
         id: background
@@ -21,203 +57,149 @@ ApplicationWindow {
         anchors.margins: 20
 
         radius: 16
-        color: "#404040"
+        color: "#4a4a4a"
         border.color: "white"
         border.width: 1
 
-        Column {
-            anchors.fill: parent
-            anchors.margins: 16
-            spacing: 12
+        // 顶部状态栏
+        Rectangle {
+            id: topPanel
 
-            Row {
-                width: parent.width
-                height: 42
-                spacing: 12
+            height: 58
+            radius: 12
+            color: "#2f2f2f"
 
-                Text {
-                    width: parent.width - resetButton.width - 20
-                    height: parent.height
-                    verticalAlignment: Text.AlignVCenter
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: 18
 
-                    text: gameController.statusText
-                    color: "white"
-                    font.pixelSize: 22
-                    font.bold: true
-                    elide: Text.ElideRight
-                }
+            Text {
+                id: titleText
 
-                Button {
-                    id: resetButton
+                anchors.left: parent.left
+                anchors.leftMargin: 24
+                anchors.verticalCenter: parent.verticalCenter
 
-                    width: 120
-                    height: parent.height
-
-                    text: "重新开始"
-
-                    onClicked: {
-                        gameController.resetGame()
-                    }
-                }
+                text: "中国象棋"
+                color: "white"
+                font.pixelSize: 22
+                font.bold: true
             }
 
-            Rectangle {
-                id: board
+            Text {
+                id: turnText
 
-                width: Math.min(parent.width - 80, (parent.height - 70) * 8 / 9)
-                height: width * 9 / 8
+                anchors.centerIn: parent
 
-                anchors.horizontalCenter: parent.horizontalCenter
+                text: window.currentSideText(gameController.currentSide)
+                color: window.currentSideColor(gameController.currentSide)
+                font.pixelSize: 24
+                font.bold: true
+            }
 
-                radius: 8
-                color: "#d99a32"
-                border.color: "#6b3b12"
-                border.width: 3
+            Text {
+                id: versionText
 
-                property int boardMargin: 36
-                property real gridWidth: width - boardMargin * 2
-                property real gridHeight: height - boardMargin * 2
-                property real cellW: gridWidth / 8
-                property real cellH: gridHeight / 9
-                property real pieceSize: Math.min(cellW, cellH) * 0.72
+                anchors.right: parent.right
+                anchors.rightMargin: 24
+                anchors.verticalCenter: parent.verticalCenter
 
-                Canvas {
-                    id: chessBoardCanvas
+                text: "V2 "
+                color: "#dddddd"
+                font.pixelSize: 16
+            }
+        }
 
-                    anchors.fill: parent
-                    anchors.margins: board.boardMargin
+        // 棋盘组件
+        BoardView {
+            id: boardView
 
-                    onWidthChanged: requestPaint()
-                    onHeightChanged: requestPaint()
+            width: Math.min(parent.width - 120, (parent.height - 180) * 8 / 9)
+            height: width * 9 / 8
 
-                    onPaint: {
-                        var ctx = getContext("2d")
-                        ctx.clearRect(0, 0, width, height)
+            anchors.centerIn: parent
 
-                        var rows = 10
-                        var cols = 9
+            chessBoardModel: boardModel
 
-                        var cellW = width / (cols - 1)
-                        var cellH = height / (rows - 1)
+            onCellClicked: function(col, row) {
+                gameController.handleQmlClick(col, row)
+            }
+        }
 
-                        ctx.strokeStyle = "#5a2e0c"
-                        ctx.lineWidth = 2
+        // 底部提示栏
+        Rectangle {
+            id: bottomPanel
 
-                        for (var r = 0; r < rows; r++) {
-                            ctx.beginPath()
-                            ctx.moveTo(0, r * cellH)
-                            ctx.lineTo(width, r * cellH)
-                            ctx.stroke()
-                        }
+            height: 58
+            radius: 12
+            color: "#2f2f2f"
 
-                        for (var c = 0; c < cols; c++) {
-                            var x = c * cellW
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 18
 
-                            ctx.beginPath()
+            Text {
+                id: statusText
 
-                            if (c === 0 || c === cols - 1) {
-                                ctx.moveTo(x, 0)
-                                ctx.lineTo(x, height)
-                            } else {
-                                ctx.moveTo(x, 0)
-                                ctx.lineTo(x, 4 * cellH)
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: 24
+                anchors.right: restartButton.left
+                anchors.rightMargin: 20
 
-                                ctx.moveTo(x, 5 * cellH)
-                                ctx.lineTo(x, height)
-                            }
+                text: gameController.statusText
+                color: "white"
+                font.pixelSize: 20
+                elide: Text.ElideRight
+            }
 
-                            ctx.stroke()
-                        }
+            Button {
+                id: restartButton
 
-                        ctx.beginPath()
-                        ctx.moveTo(3 * cellW, 0)
-                        ctx.lineTo(5 * cellW, 2 * cellH)
-                        ctx.moveTo(5 * cellW, 0)
-                        ctx.lineTo(3 * cellW, 2 * cellH)
-                        ctx.stroke()
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: 20
 
-                        ctx.beginPath()
-                        ctx.moveTo(3 * cellW, 7 * cellH)
-                        ctx.lineTo(5 * cellW, 9 * cellH)
-                        ctx.moveTo(5 * cellW, 7 * cellH)
-                        ctx.lineTo(3 * cellW, 9 * cellH)
-                        ctx.stroke()
+                text: "重新开始"
 
-                        ctx.fillStyle = "#5a2e0c"
-                        ctx.font = "bold 28px sans-serif"
-                        ctx.textAlign = "center"
-                        ctx.textBaseline = "middle"
-
-                        ctx.fillText("楚 河", width * 0.28, 4.5 * cellH)
-                        ctx.fillText("汉 界", width * 0.72, 4.5 * cellH)
-                    }
-                }
-
-                Repeater {
-                    model: boardModel
-
-                    Rectangle {
-                        id: piece
-
-                        visible: model.side !== 0
-
-                        width: board.pieceSize
-                        height: board.pieceSize
-                        radius: width / 2
-
-                        x: board.boardMargin + model.col * board.cellW - width / 2
-                        y: board.boardMargin + model.row * board.cellH - height / 2
-
-                        scale: model.selected ? 1.12 : 1.0
-                        z: model.selected ? 3 : 2
-
-                        color: model.selected ? "#ffeb3b" : "#fff7dd"
-                        border.width: model.selected ? 4 : 2
-                        border.color: model.side === 1 ? "red" : "black"
-
-                        Text {
-                            anchors.centerIn: parent
-
-                            text: model.text
-                            color: model.side === 1 ? "red" : "black"
-
-                            font.pixelSize: parent.width * 0.5
-                            font.bold: true
-                        }
-
-                        Behavior on scale {
-                            NumberAnimation {
-                                duration: 120
-                            }
-                        }
-                    }
-                }
-
-                TapHandler {
-                    acceptedButtons: Qt.LeftButton
-
-                    onTapped: function(eventPoint, button) {
-                        var localX = eventPoint.position.x - board.boardMargin
-                        var localY = eventPoint.position.y - board.boardMargin
-
-                        var toleranceX = board.pieceSize / 2
-                        var toleranceY = board.pieceSize / 2
-
-                        if (localX < -toleranceX || localX > board.gridWidth + toleranceX ||
-                            localY < -toleranceY || localY > board.gridHeight + toleranceY) {
-                            return
-                        }
-
-                        var col = Math.round(localX / board.cellW)
-                        var row = Math.round(localY / board.cellH)
-
-                        col = Math.max(0, Math.min(8, col))
-                        row = Math.max(0, Math.min(9, row))
-
-                        gameController.handleQmlClick(col, row)
-                    }
+                onClicked: {
+                    window.gameOverDialogClosed = false
+                    gameController.resetGame()
                 }
             }
+        }
+    }
+
+    // 游戏结束弹窗
+    Dialog {
+        id: gameOverDialog
+
+        modal: true
+        title: "游戏结束"
+
+        visible: gameController.gameOver && !window.gameOverDialogClosed
+
+        anchors.centerIn: parent
+
+        standardButtons: Dialog.Ok
+
+        onAccepted: {
+            window.gameOverDialogClosed = true
+        }
+
+        contentItem: Text {
+            width: 260
+            padding: 24
+
+            text: gameController.statusText
+            color: "black"
+            font.pixelSize: 24
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.WordWrap
         }
     }
 }
