@@ -9,8 +9,9 @@ struct CellData
 {
     int col = 0;
     int row = 0;
-    int side = 0;      // 0 空，1 红方，2 黑方
-    int type = 0;      // 0 空，1 将/帅，2 士/仕，3 象/相，4 马，5 车，6 炮，7 兵/卒
+    int side = 0;
+    int type = 0;
+    QString text;
     bool selected = false;
 };
 
@@ -47,6 +48,7 @@ public:
     void clearSelected();
 
 private:
+    bool inBoard(int col, int row) const;
     int indexOf(int col, int row) const;
     QString textForPiece(int side, int type) const;
 

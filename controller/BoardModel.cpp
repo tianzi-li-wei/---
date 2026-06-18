@@ -15,6 +15,7 @@ BoardModel::BoardModel(QObject *parent)
             m_cells[i].row = row;
             m_cells[i].side = 0;
             m_cells[i].type = 0;
+            m_cells[i].text = "";
             m_cells[i].selected = false;
         }
     }
@@ -61,7 +62,7 @@ QVariant BoardModel::data(const QModelIndex &index, int role) const
         return cell.type;
 
     case TextRole:
-        return textForPiece(cell.side, cell.type);
+        return cell.text;
 
     case SelectedRole:
         return cell.selected;
@@ -87,7 +88,7 @@ QHash<int, QByteArray> BoardModel::roleNames() const
 
 CellData BoardModel::getCellAt(int col, int row) const
 {
-    if (col < 0 || col >= 9 || row < 0 || row >= 10)
+    if (!inBoard(col, row))
     {
         return CellData();
     }
@@ -97,7 +98,7 @@ CellData BoardModel::getCellAt(int col, int row) const
 
 void BoardModel::setCell(int col, int row, int side, int type)
 {
-    if (col < 0 || col >= 9 || row < 0 || row >= 10)
+    if (!inBoard(col, row))
     {
         return;
     }
@@ -106,6 +107,7 @@ void BoardModel::setCell(int col, int row, int side, int type)
 
     m_cells[i].side = side;
     m_cells[i].type = type;
+    m_cells[i].text = textForPiece(side, type);
 
     QModelIndex modelIndex = createIndex(i, 0);
 
@@ -120,13 +122,15 @@ void BoardModel::clearBoard()
     {
         m_cells[i].side = 0;
         m_cells[i].type = 0;
+        m_cells[i].text = "";
         m_cells[i].selected = false;
     }
 
     if (!m_cells.isEmpty())
     {
         emit dataChanged(createIndex(0, 0),
-                         createIndex(m_cells.size() - 1, 0));
+                         createIndex(m_cells.size() - 1, 0),
+                         { SideRole, TypeRole, TextRole, SelectedRole });
     }
 }
 
@@ -134,7 +138,7 @@ void BoardModel::setSelected(int col, int row)
 {
     clearSelected();
 
-    if (col < 0 || col >= 9 || row < 0 || row >= 10)
+    if (!inBoard(col, row))
     {
         return;
     }
@@ -165,6 +169,14 @@ void BoardModel::clearSelected()
                              { SelectedRole });
         }
     }
+}
+
+bool BoardModel::inBoard(int col, int row) const
+{
+    return col >= 0 &&
+           col < 9 &&
+           row >= 0 &&
+           row < 10;
 }
 
 int BoardModel::indexOf(int col, int row) const

@@ -15,13 +15,11 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
-    engine.rootContext()->setContextProperty(
-        "boardModel",
-        &boardModel);
+    engine.rootContext()->setContextProperty("boardModel",
+                                             &boardModel);
 
-    engine.rootContext()->setContextProperty(
-        "gameController",
-        &gameController);
+    engine.rootContext()->setContextProperty("gameController",
+                                             &gameController);
 
     QObject::connect(
         &engine,

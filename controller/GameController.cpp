@@ -6,94 +6,192 @@ GameController::GameController(BoardModel *boardModel,
     m_boardModel(boardModel)
 {
     syncBoardFromEngine();
+    setStatusText("红方先行");
+}
+
+QString GameController::statusText() const
+{
+    return m_statusText;
+}
+
+int GameController::currentSide() const
+{
+    return m_ruleEngine.currentPlayer();
+}
+
+bool GameController::gameOver() const
+{
+    return m_gameOver;
+}
+
+void GameController::resetGame()
+{
+    m_ruleEngine.initializeBoard();
+
+    m_selectedCol = -1;
+    m_selectedRow = -1;
+
+    setGameOver(false);
+
+    if (m_boardModel)
+    {
+        m_boardModel->clearSelected();
+    }
+
+    syncBoardFromEngine();
+
+    emit currentSideChanged();
+
+    setStatusText("新游戏开始，红方先行");
+}
+
+void GameController::handleQmlClick(int col, int row)
+{
+    qDebug() << "QML clicked:" << col << row;
+
+    if (!m_boardModel)
+    {
+        qDebug() << "BoardModel is null";
+        return;
+    }
+
+    if (m_gameOver)
+    {
+        setStatusText("游戏已经结束，请点击重新开始");
+        return;
+    }
+
+    CellData clickedCell = m_boardModel->getCellAt(col, row);
+    int current = m_ruleEngine.currentPlayer();
+
+    if (m_selectedCol < 0 || m_selectedRow < 0)
+    {
+        if (clickedCell.side == 0)
+        {
+            setStatusText(QString("%1走棋，请选择自己的棋子")
+                              .arg(sideName(current)));
+            return;
+        }
+
+        if (clickedCell.side != current)
+        {
+            setStatusText(QString("现在是%1回合，不能选择%2棋子")
+                              .arg(sideName(current), sideName(clickedCell.side)));
+            return;
+        }
+
+        m_selectedCol = col;
+        m_selectedRow = row;
+
+        m_boardModel->setSelected(col, row);
+
+        setStatusText(QString("已选择%1棋子：%2")
+                          .arg(sideName(clickedCell.side), clickedCell.text));
+
+        return;
+    }
+
+    if (clickedCell.side == current)
+    {
+        m_selectedCol = col;
+        m_selectedRow = row;
+
+        m_boardModel->setSelected(col, row);
+
+        setStatusText(QString("已重新选择%1棋子：%2")
+                          .arg(sideName(clickedCell.side), clickedCell.text));
+
+        return;
+    }
+
+    MoveResult result = m_ruleEngine.movePiece(m_selectedCol,
+                                               m_selectedRow,
+                                               col,
+                                               row);
+
+    if (!result.success)
+    {
+        setStatusText("非法走法，请重新选择目标位置");
+        return;
+    }
+
+    m_selectedCol = -1;
+    m_selectedRow = -1;
+
+    m_boardModel->clearSelected();
+    syncBoardFromEngine();
+
+    emit currentSideChanged();
+
+    if (result.gameOver)
+    {
+        setGameOver(true);
+
+        setStatusText(QString("游戏结束，%1获胜")
+                          .arg(sideName(result.winner)));
+        return;
+    }
+
+    setStatusText(QString("走棋成功，轮到%1")
+                      .arg(sideName(m_ruleEngine.currentPlayer())));
 }
 
 void GameController::syncBoardFromEngine()
 {
     if (!m_boardModel)
     {
-        qDebug() << "BoardModel is null";
         return;
     }
 
     m_boardModel->clearBoard();
 
-    // 黑方
-    m_boardModel->setCell(0, 0, 2, 5); // 車
-    m_boardModel->setCell(1, 0, 2, 4); // 马
-    m_boardModel->setCell(2, 0, 2, 3); // 象
-    m_boardModel->setCell(3, 0, 2, 2); // 士
-    m_boardModel->setCell(4, 0, 2, 1); // 将
-    m_boardModel->setCell(5, 0, 2, 2); // 士
-    m_boardModel->setCell(6, 0, 2, 3); // 象
-    m_boardModel->setCell(7, 0, 2, 4); // 马
-    m_boardModel->setCell(8, 0, 2, 5); // 車
+    for (int row = 0; row < 10; ++row)
+    {
+        for (int col = 0; col < 9; ++col)
+        {
+            Piece piece = m_ruleEngine.queryPiece(col, row);
 
-    m_boardModel->setCell(1, 2, 2, 6); // 炮
-    m_boardModel->setCell(7, 2, 2, 6); // 炮
-
-    m_boardModel->setCell(0, 3, 2, 7); // 卒
-    m_boardModel->setCell(2, 3, 2, 7); // 卒
-    m_boardModel->setCell(4, 3, 2, 7); // 卒
-    m_boardModel->setCell(6, 3, 2, 7); // 卒
-    m_boardModel->setCell(8, 3, 2, 7); // 卒
-
-    // 红方
-    m_boardModel->setCell(0, 9, 1, 5); // 車
-    m_boardModel->setCell(1, 9, 1, 4); // 马
-    m_boardModel->setCell(2, 9, 1, 3); // 相
-    m_boardModel->setCell(3, 9, 1, 2); // 仕
-    m_boardModel->setCell(4, 9, 1, 1); // 帅
-    m_boardModel->setCell(5, 9, 1, 2); // 仕
-    m_boardModel->setCell(6, 9, 1, 3); // 相
-    m_boardModel->setCell(7, 9, 1, 4); // 马
-    m_boardModel->setCell(8, 9, 1, 5); // 車
-
-    m_boardModel->setCell(1, 7, 1, 6); // 炮
-    m_boardModel->setCell(7, 7, 1, 6); // 炮
-
-    m_boardModel->setCell(0, 6, 1, 7); // 兵
-    m_boardModel->setCell(2, 6, 1, 7); // 兵
-    m_boardModel->setCell(4, 6, 1, 7); // 兵
-    m_boardModel->setCell(6, 6, 1, 7); // 兵
-    m_boardModel->setCell(8, 6, 1, 7); // 兵
+            m_boardModel->setCell(col,
+                                  row,
+                                  piece.side,
+                                  piece.type);
+        }
+    }
 }
 
-void GameController::handleQmlClick(int x, int y)
+void GameController::setStatusText(const QString &text)
 {
-    qDebug() << "QML clicked:" << x << y;
-
-    if (!m_boardModel)
+    if (m_statusText == text)
     {
-        qDebug() << "BoardModel is null";
         return;
     }
 
-    CellData piece = m_boardModel->getCellAt(x, y);
+    m_statusText = text;
+    emit statusTextChanged();
+}
 
-    QString sideText;
-
-    if (piece.side == 1)
+void GameController::setGameOver(bool value)
+{
+    if (m_gameOver == value)
     {
-        sideText = "红方";
-    }
-    else if (piece.side == 2)
-    {
-        sideText = "黑方";
-    }
-    else
-    {
-        sideText = "空位置";
+        return;
     }
 
-    qDebug() << "Clicked piece side:" << sideText;
+    m_gameOver = value;
+    emit gameOverChanged();
+}
 
-    if (piece.side != 0)
+QString GameController::sideName(int side) const
+{
+    if (side == Xiangqi::SIDE_RED)
     {
-        m_boardModel->setSelected(x, y);
+        return "红方";
     }
-    else
+
+    if (side == Xiangqi::SIDE_BLACK)
     {
-        m_boardModel->clearSelected();
+        return "黑方";
     }
+
+    return "无";
 }
