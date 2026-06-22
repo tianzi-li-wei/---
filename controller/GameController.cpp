@@ -47,11 +47,10 @@ void GameController::resetGame()
 
 void GameController::handleQmlClick(int col, int row)
 {
-    qDebug() << "QML clicked:" << col << row;
 
     if (!m_boardModel)
     {
-        qDebug() << "BoardModel is null";
+        setStatusText("棋盘模型未初始化");
         return;
     }
 

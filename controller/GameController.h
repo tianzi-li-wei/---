@@ -2,7 +2,6 @@
 #define GAMECONTROLLER_H
 
 #include <QObject>
-#include <QDebug>
 #include <QString>
 
 #include "BoardModel.h"

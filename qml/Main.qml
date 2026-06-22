@@ -105,7 +105,7 @@ ApplicationWindow {
                 anchors.rightMargin: 24
                 anchors.verticalCenter: parent.verticalCenter
 
-                text: "V2 "
+                text: "本地对弈版"
                 color: "#dddddd"
                 font.pixelSize: 16
             }
