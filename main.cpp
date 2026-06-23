@@ -15,6 +15,8 @@ int main(int argc, char *argv[])
     GameController gameController(&boardModel);
     NetworkManager networkManager;
 
+    gameController.setNetworkManager(&networkManager);
+
     QQmlApplicationEngine engine;
 
     engine.rootContext()->setContextProperty("boardModel", &boardModel);

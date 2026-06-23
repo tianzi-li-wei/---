@@ -29,31 +29,44 @@ ApplicationWindow {
         return "等待开始"
     }
 
+    function currentSideColor(side) {
+        if (side === 1) {
+            return "#ff8a80"
+        }
+
+        if (side === 2) {
+            return "#e0e0e0"
+        }
+
+        return "#ffcc80"
+    }
+
     function connectionStateText() {
-        if (networkManager.statusText !== undefined &&
-            networkManager.statusText !== null &&
-            networkManager.statusText !== "") {
-            return networkManager.statusText
+        if (gameController.connectionState !== undefined &&
+            gameController.connectionState !== null &&
+            gameController.connectionState !== "") {
+            return gameController.connectionState
         }
 
         return "未连接"
     }
 
     function playerSideText() {
-        if (networkManager.isHost) {
-            return "红方"
-        }
-
-        if (networkManager.connected) {
-            return "黑方"
+        if (gameController.playerSideText !== undefined &&
+            gameController.playerSideText !== null &&
+            gameController.playerSideText !== "") {
+            return gameController.playerSideText
         }
 
         return "未分配"
     }
 
     function createRoomClicked() {
-        networkManager.hostRoom(45454)
-        window.localNetworkMessage = "正在创建房间..."
+        if (typeof gameController.createRoom === "function") {
+            gameController.createRoom()
+        } else {
+            window.localNetworkMessage = "Controller 尚未实现 createRoom()"
+        }
     }
 
     function joinRoomClicked(host) {
@@ -62,24 +75,27 @@ ApplicationWindow {
             return
         }
 
-        networkManager.joinRoom(host, 45454)
-        window.localNetworkMessage = "正在连接：" + host
+        if (typeof gameController.joinRoom === "function") {
+            gameController.joinRoom(host)
+        } else {
+            window.localNetworkMessage = "Controller 尚未实现 joinRoom(host)"
+        }
     }
 
     function disconnectClicked() {
-        networkManager.disconnectFromRoom()
-        window.localNetworkMessage = "已断开连接"
-    }
-    Connections {
-        target: networkManager
-
-        function onStatusTextChanged() {
-            window.localNetworkMessage = networkManager.statusText
+        if (typeof gameController.disconnectNetwork === "function") {
+            gameController.disconnectNetwork()
+        } else {
+            window.localNetworkMessage = "Controller 尚未实现 disconnectNetwork()"
         }
+    }
 
-        function onConnectedChanged() {
-            if (networkManager.connected) {
-                window.localNetworkMessage = "连接成功"
+    Connections {
+        target: gameController
+
+        function onGameOverChanged() {
+            if (gameController.gameOver) {
+                window.gameOverDialogClosed = false
             }
         }
     }

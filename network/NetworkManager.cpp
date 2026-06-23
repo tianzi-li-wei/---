@@ -3,12 +3,16 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QHostAddress>
+#include <QAbstractSocket>
+#include <QTimer>
 
 NetworkManager::NetworkManager(QObject *parent)
     : QObject(parent)
 {
-    connect(&m_server, &QTcpServer::newConnection,
-            this, &NetworkManager::onNewConnection);
+    connect(&m_server,
+            &QTcpServer::newConnection,
+            this,
+            &NetworkManager::onNewConnection);
 }
 
 bool NetworkManager::connected() const
@@ -33,19 +37,24 @@ void NetworkManager::hostRoom(quint16 port)
     m_isHost = true;
     emit roleChanged();
 
-    if (!m_server.listen(QHostAddress::AnyIPv4, port)) {
-        setStatusText(QStringLiteral("创建房间失败"));
+    if (!m_server.listen(QHostAddress::AnyIPv4, port))
+    {
+        setConnected(false);
+        setStatusText(QStringLiteral("创建房间失败：%1")
+                          .arg(m_server.errorString()));
         return;
     }
 
+    setConnected(false);
     setStatusText(QStringLiteral("等待对方加入，端口 %1").arg(port));
 }
 
 void NetworkManager::joinRoom(const QString &ip, quint16 port)
 {
-    const QString trimmedIp = ip.trimmed();
+    QString trimmedIp = ip.trimmed();
 
-    if (trimmedIp.isEmpty()) {
+    if (trimmedIp.isEmpty())
+    {
         setStatusText(QStringLiteral("请输入 IP 地址"));
         return;
     }
@@ -55,86 +64,121 @@ void NetworkManager::joinRoom(const QString &ip, quint16 port)
     m_isHost = false;
     emit roleChanged();
 
-    auto *socket = new QTcpSocket(this);
+    QTcpSocket *socket = new QTcpSocket(this);
     setSocket(socket);
 
-    connect(socket, &QTcpSocket::connected, this, [this]() {
-        setConnected(true);
-        setStatusText(QStringLiteral("已连接"));
-    });
+    connect(socket,
+            &QTcpSocket::connected,
+            this,
+            [this]() {
+                setConnected(true);
+                setStatusText(QStringLiteral("已连接"));
+            });
 
-    setStatusText(QStringLiteral("正在连接 %1:%2").arg(trimmedIp).arg(port));
+    setStatusText(QStringLiteral("正在连接 %1:%2")
+                      .arg(trimmedIp)
+                      .arg(port));
+
     socket->connectToHost(trimmedIp, port);
+
+    QTimer::singleShot(5000, this, [this, socket]() {
+        if (m_socket == socket &&
+            socket->state() != QAbstractSocket::ConnectedState)
+        {
+            socket->abort();
+            setConnected(false);
+            setStatusText(QStringLiteral("连接超时"));
+        }
+    });
 }
 
 void NetworkManager::disconnectFromRoom()
 {
-    if (m_server.isListening()) {
+    if (m_server.isListening())
+    {
         m_server.close();
     }
 
-    if (m_socket) {
-        m_socket->disconnectFromHost();
-        m_socket->deleteLater();
+    if (m_socket)
+    {
+        QTcpSocket *oldSocket = m_socket;
         m_socket = nullptr;
+
+        oldSocket->disconnectFromHost();
+        oldSocket->deleteLater();
     }
+
+    m_isHost = false;
+    emit roleChanged();
 
     setConnected(false);
     setStatusText(QStringLiteral("未连接"));
 }
 
-void NetworkManager::sendMove(int fromRow, int fromCol, int toRow, int toCol, QString nextTurn)
+void NetworkManager::sendMove(int fromX,
+                              int fromY,
+                              int toX,
+                              int toY)
 {
     QJsonObject object;
+
     object["type"] = "move";
-    object["fromRow"] = fromRow;
-    object["fromCol"] = fromCol;
-    object["toRow"] = toRow;
-    object["toCol"] = toCol;
-    object["nextTurn"] = nextTurn;
+    object["fromX"] = fromX;
+    object["fromY"] = fromY;
+    object["toX"] = toX;
+    object["toY"] = toY;
 
     sendJson(object);
 }
 
 void NetworkManager::onNewConnection()
 {
-    if (m_socket) {
+    if (m_socket)
+    {
         QTcpSocket *extraSocket = m_server.nextPendingConnection();
+
         extraSocket->disconnectFromHost();
         extraSocket->deleteLater();
+
         return;
     }
 
-    setSocket(m_server.nextPendingConnection());
+    QTcpSocket *socket = m_server.nextPendingConnection();
+
+    setSocket(socket);
     setConnected(true);
     setStatusText(QStringLiteral("已连接"));
 }
 
 void NetworkManager::onReadyRead()
 {
-    if (!m_socket) {
+    if (!m_socket)
+    {
         return;
     }
 
-    while (m_socket->canReadLine()) {
-        const QByteArray line = m_socket->readLine().trimmed();
-        const QJsonDocument document = QJsonDocument::fromJson(line);
+    while (m_socket->canReadLine())
+    {
+        QByteArray line = m_socket->readLine().trimmed();
 
-        if (!document.isObject()) {
+        QJsonDocument document =
+            QJsonDocument::fromJson(line);
+
+        if (!document.isObject())
+        {
             continue;
         }
 
-        const QJsonObject object = document.object();
-        const QString type = object["type"].toString();
+        QJsonObject object = document.object();
+        QString type = object["type"].toString();
 
-        if (type == "move") {
+        if (type == "move")
+        {
             emit moveReceived(
-                object["fromRow"].toInt(),
-                object["fromCol"].toInt(),
-                object["toRow"].toInt(),
-                object["toCol"].toInt(),
-                object["nextTurn"].toString()
-                );
+                object["fromX"].toInt(),
+                object["fromY"].toInt(),
+                object["toX"].toInt(),
+                object["toY"].toInt());
         }
     }
 }
@@ -144,7 +188,8 @@ void NetworkManager::onDisconnected()
     setConnected(false);
     setStatusText(QStringLiteral("连接已断开"));
 
-    if (m_socket) {
+    if (m_socket)
+    {
         m_socket->deleteLater();
         m_socket = nullptr;
     }
@@ -152,17 +197,22 @@ void NetworkManager::onDisconnected()
 
 void NetworkManager::setSocket(QTcpSocket *socket)
 {
-    if (m_socket && m_socket != socket) {
+    if (m_socket && m_socket != socket)
+    {
         m_socket->deleteLater();
     }
 
     m_socket = socket;
 
-    connect(m_socket, &QTcpSocket::readyRead,
-            this, &NetworkManager::onReadyRead);
+    connect(m_socket,
+            &QTcpSocket::readyRead,
+            this,
+            &NetworkManager::onReadyRead);
 
-    connect(m_socket, &QTcpSocket::disconnected,
-            this, &NetworkManager::onDisconnected);
+    connect(m_socket,
+            &QTcpSocket::disconnected,
+            this,
+            &NetworkManager::onDisconnected);
 
     connect(m_socket,
             &QTcpSocket::errorOccurred,
@@ -175,7 +225,8 @@ void NetworkManager::setSocket(QTcpSocket *socket)
 
 void NetworkManager::setStatusText(const QString &text)
 {
-    if (m_statusText == text) {
+    if (m_statusText == text)
+    {
         return;
     }
 
@@ -185,7 +236,8 @@ void NetworkManager::setStatusText(const QString &text)
 
 void NetworkManager::setConnected(bool connected)
 {
-    if (m_connected == connected) {
+    if (m_connected == connected)
+    {
         return;
     }
 
@@ -195,11 +247,17 @@ void NetworkManager::setConnected(bool connected)
 
 void NetworkManager::sendJson(const QJsonObject &object)
 {
-    if (!m_socket || m_socket->state() != QAbstractSocket::ConnectedState) {
+    if (!m_socket ||
+        m_socket->state() != QAbstractSocket::ConnectedState)
+    {
         return;
     }
 
-    const QByteArray data = QJsonDocument(object).toJson(QJsonDocument::Compact) + '\n';
+    QByteArray data =
+        QJsonDocument(object).toJson(QJsonDocument::Compact);
+
+    data.append('\n');
+
     m_socket->write(data);
     m_socket->flush();
 }

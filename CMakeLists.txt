@@ -25,9 +25,9 @@ qt_add_executable(appXiangqi
     controller/BoardModel.cpp
     controller/GameController.h
     controller/GameController.cpp
+
     network/NetworkManager.h
     network/NetworkManager.cpp
-
     network/README.md
 )
 
@@ -38,8 +38,7 @@ qt_add_qml_module(appXiangqi
         qml/Main.qml
         qml/BoardView.qml
         qml/PieceItem.qml
-
-    )
+)
 
 target_compile_features(appXiangqi PRIVATE cxx_std_23)
 
