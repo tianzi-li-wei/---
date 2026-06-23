@@ -29,44 +29,31 @@ ApplicationWindow {
         return "等待开始"
     }
 
-    function currentSideColor(side) {
-        if (side === 1) {
-            return "#ff8a80"
-        }
-
-        if (side === 2) {
-            return "#e0e0e0"
-        }
-
-        return "#ffcc80"
-    }
-
     function connectionStateText() {
-        if (gameController.connectionState !== undefined &&
-            gameController.connectionState !== null &&
-            gameController.connectionState !== "") {
-            return gameController.connectionState
+        if (networkManager.statusText !== undefined &&
+            networkManager.statusText !== null &&
+            networkManager.statusText !== "") {
+            return networkManager.statusText
         }
 
         return "未连接"
     }
 
     function playerSideText() {
-        if (gameController.playerSideText !== undefined &&
-            gameController.playerSideText !== null &&
-            gameController.playerSideText !== "") {
-            return gameController.playerSideText
+        if (networkManager.isHost) {
+            return "红方"
+        }
+
+        if (networkManager.connected) {
+            return "黑方"
         }
 
         return "未分配"
     }
 
     function createRoomClicked() {
-        if (typeof gameController.createRoom === "function") {
-            gameController.createRoom()
-        } else {
-            window.localNetworkMessage = "Controller 尚未实现 createRoom()"
-        }
+        networkManager.hostRoom(45454)
+        window.localNetworkMessage = "正在创建房间..."
     }
 
     function joinRoomClicked(host) {
@@ -75,27 +62,24 @@ ApplicationWindow {
             return
         }
 
-        if (typeof gameController.joinRoom === "function") {
-            gameController.joinRoom(host)
-        } else {
-            window.localNetworkMessage = "Controller 尚未实现 joinRoom(host)"
-        }
+        networkManager.joinRoom(host, 45454)
+        window.localNetworkMessage = "正在连接：" + host
     }
 
     function disconnectClicked() {
-        if (typeof gameController.disconnectNetwork === "function") {
-            gameController.disconnectNetwork()
-        } else {
-            window.localNetworkMessage = "Controller 尚未实现 disconnectNetwork()"
-        }
+        networkManager.disconnectFromRoom()
+        window.localNetworkMessage = "已断开连接"
     }
-
     Connections {
-        target: gameController
+        target: networkManager
 
-        function onGameOverChanged() {
-            if (gameController.gameOver) {
-                window.gameOverDialogClosed = false
+        function onStatusTextChanged() {
+            window.localNetworkMessage = networkManager.statusText
+        }
+
+        function onConnectedChanged() {
+            if (networkManager.connected) {
+                window.localNetworkMessage = "连接成功"
             }
         }
     }

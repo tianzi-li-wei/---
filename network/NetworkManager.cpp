@@ -43,6 +43,13 @@ void NetworkManager::hostRoom(quint16 port)
 
 void NetworkManager::joinRoom(const QString &ip, quint16 port)
 {
+    const QString trimmedIp = ip.trimmed();
+
+    if (trimmedIp.isEmpty()) {
+        setStatusText(QStringLiteral("请输入 IP 地址"));
+        return;
+    }
+
     disconnectFromRoom();
 
     m_isHost = false;
@@ -51,13 +58,13 @@ void NetworkManager::joinRoom(const QString &ip, quint16 port)
     auto *socket = new QTcpSocket(this);
     setSocket(socket);
 
-    setStatusText(QStringLiteral("连接中..."));
-    socket->connectToHost(ip, port);
-
     connect(socket, &QTcpSocket::connected, this, [this]() {
         setConnected(true);
         setStatusText(QStringLiteral("已连接"));
     });
+
+    setStatusText(QStringLiteral("正在连接 %1:%2").arg(trimmedIp).arg(port));
+    socket->connectToHost(trimmedIp, port);
 }
 
 void NetworkManager::disconnectFromRoom()
@@ -153,10 +160,15 @@ void NetworkManager::setSocket(QTcpSocket *socket)
 
     connect(m_socket, &QTcpSocket::readyRead,
             this, &NetworkManager::onReadyRead);
+
     connect(m_socket, &QTcpSocket::disconnected,
             this, &NetworkManager::onDisconnected);
-    connect(m_socket, &QTcpSocket::errorOccurred,
-            this, [this]() {
+
+    connect(m_socket,
+            &QTcpSocket::errorOccurred,
+            this,
+            [this](QAbstractSocket::SocketError) {
+                setConnected(false);
                 setStatusText(QStringLiteral("连接失败或已断开"));
             });
 }

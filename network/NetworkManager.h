@@ -1,9 +1,10 @@
 #pragma once
 
 #include <QObject>
+#include <QString>
+#include <QJsonObject>
 #include <QTcpServer>
 #include <QTcpSocket>
-
 class NetworkManager : public QObject
 {
     Q_OBJECT
