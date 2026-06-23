@@ -7,6 +7,7 @@
 #include "BoardModel.h"
 #include "../core/RuleEngine.h"
 #include "../core/Constants.h"
+#include "../network/NetworkManager.h"
 
 class GameController : public QObject
 {
@@ -30,12 +31,20 @@ public:
     QString connectionState() const;
     QString playerSideText() const;
 
+    void setNetworkManager(NetworkManager *networkManager);
+
     Q_INVOKABLE void handleQmlClick(int col, int row);
     Q_INVOKABLE void resetGame();
 
     Q_INVOKABLE void createRoom();
     Q_INVOKABLE void joinRoom(const QString &host);
     Q_INVOKABLE void disconnectNetwork();
+
+public slots:
+    void applyRemoteMove(int fromX,
+                         int fromY,
+                         int toX,
+                         int toY);
 
 signals:
     void statusTextChanged();
@@ -51,11 +60,16 @@ private:
     void setGameOver(bool value);
     void setConnectionState(const QString &state);
     void setPlayerSideText(const QString &sideText);
+    void updateNetworkStateText();
+
     QString sideName(int side) const;
+    int localPlayerSide() const;
+    bool isNetworkMode() const;
 
 private:
     BoardModel *m_boardModel = nullptr;
     RuleEngine m_ruleEngine;
+    NetworkManager *m_networkManager = nullptr;
 
     int m_selectedCol = -1;
     int m_selectedRow = -1;
