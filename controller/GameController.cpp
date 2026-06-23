@@ -24,6 +24,16 @@ bool GameController::gameOver() const
     return m_gameOver;
 }
 
+QString GameController::connectionState() const
+{
+    return m_connectionState;
+}
+
+QString GameController::playerSideText() const
+{
+    return m_playerSideText;
+}
+
 void GameController::resetGame()
 {
     m_ruleEngine.initializeBoard();
@@ -45,9 +55,40 @@ void GameController::resetGame()
     setStatusText("新游戏开始，红方先行");
 }
 
+void GameController::createRoom()
+{
+    setConnectionState("等待连接");
+    setPlayerSideText("红方");
+
+    setStatusText("已创建房间，等待对方连接");
+}
+
+void GameController::joinRoom(const QString &host)
+{
+    QString trimmedHost = host.trimmed();
+
+    if (trimmedHost.isEmpty())
+    {
+        setStatusText("请输入对方 IP 地址");
+        return;
+    }
+
+    setConnectionState("正在连接");
+    setPlayerSideText("黑方");
+
+    setStatusText(QString("正在连接：%1").arg(trimmedHost));
+}
+
+void GameController::disconnectNetwork()
+{
+    setConnectionState("未连接");
+    setPlayerSideText("未分配");
+
+    setStatusText("已断开连接");
+}
+
 void GameController::handleQmlClick(int col, int row)
 {
-
     if (!m_boardModel)
     {
         setStatusText("棋盘模型未初始化");
@@ -89,7 +130,6 @@ void GameController::handleQmlClick(int col, int row)
 
         return;
     }
-
     if (clickedCell.side == current)
     {
         m_selectedCol = col;
@@ -178,6 +218,28 @@ void GameController::setGameOver(bool value)
 
     m_gameOver = value;
     emit gameOverChanged();
+}
+
+void GameController::setConnectionState(const QString &state)
+{
+    if (m_connectionState == state)
+    {
+        return;
+    }
+
+    m_connectionState = state;
+    emit connectionStateChanged();
+}
+
+void GameController::setPlayerSideText(const QString &sideText)
+{
+    if (m_playerSideText == sideText)
+    {
+        return;
+    }
+
+    m_playerSideText = sideText;
+    emit playerSideChanged();
 }
 
 QString GameController::sideName(int side) const
