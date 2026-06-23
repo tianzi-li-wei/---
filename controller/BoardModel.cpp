@@ -204,7 +204,7 @@ QString BoardModel::textForPiece(int side, int type) const
         case 4:
             return "马";
         case 5:
-            return "車";
+            return "车";
         case 6:
             return "炮";
         case 7:
@@ -227,7 +227,7 @@ QString BoardModel::textForPiece(int side, int type) const
         case 4:
             return "马";
         case 5:
-            return "車";
+            return "车";
         case 6:
             return "炮";
         case 7:

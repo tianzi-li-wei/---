@@ -36,73 +36,82 @@ bool RuleEngine::isValidMove(
     int toX,
     int toY) const
 {
-    if(!board.inBoard(fromX,fromY))
+    if(!board.inBoard(fromX, fromY))
         return false;
 
-    if(!board.inBoard(toX,toY))
+    if(!board.inBoard(toX, toY))
         return false;
 
     Piece piece =
-        board.getPiece(fromX,fromY);
+        board.getPiece(fromX, fromY);
 
     if(piece.isEmpty())
         return false;
 
     Piece target =
-        board.getPiece(toX,toY);
+        board.getPiece(toX, toY);
 
     if(target.side == piece.side)
         return false;
 
+    bool valid = false;
+
     switch(piece.type)
     {
     case Xiangqi::TYPE_ROOK:
-        return validateRook(
-            fromX,fromY,
-            toX,toY);
+        valid = validateRook(
+            fromX, fromY,
+            toX, toY);
+        break;
 
     case Xiangqi::TYPE_HORSE:
-        return validateHorse(
-            fromX,fromY,
-            toX,toY);
+        valid = validateHorse(
+            fromX, fromY,
+            toX, toY);
+        break;
 
     case Xiangqi::TYPE_CANNON:
-        return validateCannon(
-            fromX,fromY,
-            toX,toY);
+        valid = validateCannon(
+            fromX, fromY,
+            toX, toY);
+        break;
 
     case Xiangqi::TYPE_PAWN:
-        return validatePawn(
-            fromX,fromY,
-            toX,toY);
+        valid = validatePawn(
+            fromX, fromY,
+            toX, toY);
+        break;
 
     case Xiangqi::TYPE_KING:
-        if(!validateKing(
-                fromX,fromY,
-                toX,toY))
-            return false;
+        valid = validateKing(
+            fromX, fromY,
+            toX, toY);
         break;
 
     case Xiangqi::TYPE_ADVISOR:
-        if(!validateAdvisor(
-                fromX,fromY,
-                toX,toY))
-            return false;
+        valid = validateAdvisor(
+            fromX, fromY,
+            toX, toY);
         break;
 
     case Xiangqi::TYPE_BISHOP:
-        if(!validateElephant(
-                fromX,fromY,
-                toX,toY))
-            return false;
+        valid = validateElephant(
+            fromX, fromY,
+            toX, toY);
         break;
 
     default:
         return false;
     }
+
+    if(!valid)
+    {
+        return false;
+    }
+
     if(kingsFaceToFaceAfterMove(
-            fromX,fromY,
-            toX,toY))
+            fromX, fromY,
+            toX, toY))
     {
         return false;
     }
@@ -154,37 +163,33 @@ MoveResult RuleEngine::movePiece(
 
     result.success = true;
 
-    int winner;
+    if(target.type == Xiangqi::TYPE_KING)
+    {
+        result.gameOver = true;
+        result.winner = moving.side;
+        return result;
+    }
+
+    int winner = 0;
 
     if(isGameOver(winner))
     {
         result.gameOver = true;
-
         result.winner = winner;
+        return result;
     }
 
-    if(currentSide ==
-        Xiangqi::SIDE_RED)
+    if(currentSide == Xiangqi::SIDE_RED)
     {
-        currentSide =
-            Xiangqi::SIDE_BLACK;
+        currentSide = Xiangqi::SIDE_BLACK;
     }
     else
     {
-        currentSide =
-            Xiangqi::SIDE_RED;
-    }
-
-    if(target.type ==
-        Xiangqi::TYPE_KING)
-    {
-        result.gameOver = true;
-        result.winner = moving.side;
+        currentSide = Xiangqi::SIDE_RED;
     }
 
     return result;
 }
-
 bool RuleEngine::isGameOver(
     int& winner) const
 {
@@ -583,44 +588,51 @@ bool RuleEngine::kingsFaceToFaceAfterMove(
     int toX,
     int toY) const
 {
-    int redX=-1,redY=-1;
-    int blackX=-1,blackY=-1;
-
-    for(int y=0;y<10;y++)
+    auto pieceAfterMove = [&](int x, int y) -> Piece
     {
-        for(int x=0;x<9;x++)
+        if(x == fromX && y == fromY)
         {
-            Piece p =
-                board.getPiece(x,y);
+            return Piece();
+        }
 
-            if(x==fromX && y==fromY)
-            {
-                p = Piece();
-            }
+        if(x == toX && y == toY)
+        {
+            return board.getPiece(fromX, fromY);
+        }
 
-            if(x==toX && y==toY)
-            {
-                p = board.getPiece(
-                    fromX,
-                    fromY);
-            }
+        return board.getPiece(x, y);
+    };
 
-            if(p.type ==
-                Xiangqi::TYPE_KING)
+    int redX = -1;
+    int redY = -1;
+    int blackX = -1;
+    int blackY = -1;
+
+    for(int y = 0; y < 10; y++)
+    {
+        for(int x = 0; x < 9; x++)
+        {
+            Piece p = pieceAfterMove(x, y);
+
+            if(p.type == Xiangqi::TYPE_KING)
             {
-                if(p.side ==
-                    Xiangqi::SIDE_RED)
+                if(p.side == Xiangqi::SIDE_RED)
                 {
-                    redX=x;
-                    redY=y;
+                    redX = x;
+                    redY = y;
                 }
-                else
+                else if(p.side == Xiangqi::SIDE_BLACK)
                 {
-                    blackX=x;
-                    blackY=y;
+                    blackX = x;
+                    blackY = y;
                 }
             }
         }
+    }
+
+    if(redX < 0 || blackX < 0)
+    {
+        return false;
     }
 
     if(redX != blackX)
@@ -629,18 +641,16 @@ bool RuleEngine::kingsFaceToFaceAfterMove(
     }
 
     int minY =
-        std::min(redY,blackY);
+        std::min(redY, blackY);
 
     int maxY =
-        std::max(redY,blackY);
+        std::max(redY, blackY);
 
-    for(int y=minY+1;
-         y<maxY;
+    for(int y = minY + 1;
+         y < maxY;
          y++)
     {
-        if(!board.getPiece(
-                      redX,
-                      y).isEmpty())
+        if(!pieceAfterMove(redX, y).isEmpty())
         {
             return false;
         }

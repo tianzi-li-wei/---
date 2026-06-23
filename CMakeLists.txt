@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 4.1.1)
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
-# cmake_minimum_required(VERSION 4.3.2)
-# set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
-set(CMAKE_CXX_MODULE_STD ON)
 
 project(Xiangqi VERSION 0.1 LANGUAGES CXX)
+
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2)
+
+include(GNUInstallDirs)
+
 qt_standard_project_setup(REQUIRES 6.11)
 
 qt_add_executable(appXiangqi
@@ -20,38 +20,35 @@ qt_add_executable(appXiangqi
     core/ChessBoard.cpp
     core/RuleEngine.h
     core/RuleEngine.cpp
+
     controller/BoardModel.h
     controller/BoardModel.cpp
     controller/GameController.h
     controller/GameController.cpp
-    network/README.md
 
+    network/README.md
 )
+
 qt_add_qml_module(appXiangqi
     URI Xiangqi
     VERSION 1.0
     QML_FILES
-            qml/Main.qml
-
+        qml/Main.qml
+        qml/BoardView.qml
+        qml/PieceItem.qml
 )
+
 target_compile_features(appXiangqi PRIVATE cxx_std_23)
+
 target_link_libraries(appXiangqi
-    PRIVATE Qt6::Quick
+    PRIVATE
+        Qt6::Quick
+        Qt6::QuickControls2
 )
 
 set(CMAKE_INSTALL_PREFIX "/opt/${PROJECT_NAME}" CACHE PATH "Install path prefix" FORCE)
+
 install(TARGETS appXiangqi
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-# C++ Modules support
-set(XIANGQI_MODULE_FILES
-    # math.cppm                             # 模块文件
-)
-source_group("Xiangqi" FILES ${XIANGQI_MODULE_FILES})
-target_sources(appXiangqi
-    PRIVATE FILE_SET cxx_modules TYPE CXX_MODULES
-        BASE_DIRS   ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES  ${XIANGQI_MODULE_FILES}
 )

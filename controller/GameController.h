@@ -2,7 +2,6 @@
 #define GAMECONTROLLER_H
 
 #include <QObject>
-#include <QDebug>
 #include <QString>
 
 #include "BoardModel.h"
@@ -17,6 +16,9 @@ class GameController : public QObject
     Q_PROPERTY(int currentSide READ currentSide NOTIFY currentSideChanged)
     Q_PROPERTY(bool gameOver READ gameOver NOTIFY gameOverChanged)
 
+    Q_PROPERTY(QString connectionState READ connectionState NOTIFY connectionStateChanged)
+    Q_PROPERTY(QString playerSideText READ playerSideText NOTIFY playerSideChanged)
+
 public:
     explicit GameController(BoardModel *boardModel,
                             QObject *parent = nullptr);
@@ -25,18 +27,30 @@ public:
     int currentSide() const;
     bool gameOver() const;
 
+    QString connectionState() const;
+    QString playerSideText() const;
+
     Q_INVOKABLE void handleQmlClick(int col, int row);
     Q_INVOKABLE void resetGame();
+
+    Q_INVOKABLE void createRoom();
+    Q_INVOKABLE void joinRoom(const QString &host);
+    Q_INVOKABLE void disconnectNetwork();
 
 signals:
     void statusTextChanged();
     void currentSideChanged();
     void gameOverChanged();
 
+    void connectionStateChanged();
+    void playerSideChanged();
+
 private:
     void syncBoardFromEngine();
     void setStatusText(const QString &text);
     void setGameOver(bool value);
+    void setConnectionState(const QString &state);
+    void setPlayerSideText(const QString &sideText);
     QString sideName(int side) const;
 
 private:
@@ -48,6 +62,9 @@ private:
 
     QString m_statusText;
     bool m_gameOver = false;
+
+    QString m_connectionState = "未连接";
+    QString m_playerSideText = "未分配";
 };
 
 #endif // GAMECONTROLLER_H
