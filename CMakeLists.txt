@@ -4,7 +4,7 @@ project(Xiangqi VERSION 0.1 LANGUAGES CXX)
 
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2)
+find_package(Qt6 REQUIRED COMPONENTS Quick QuickControls2 Network)
 
 include(GNUInstallDirs)
 
@@ -25,6 +25,8 @@ qt_add_executable(appXiangqi
     controller/BoardModel.cpp
     controller/GameController.h
     controller/GameController.cpp
+    network/NetworkManager.h
+    network/NetworkManager.cpp
 
     network/README.md
 )
@@ -36,7 +38,8 @@ qt_add_qml_module(appXiangqi
         qml/Main.qml
         qml/BoardView.qml
         qml/PieceItem.qml
-)
+
+    )
 
 target_compile_features(appXiangqi PRIVATE cxx_std_23)
 
@@ -44,6 +47,7 @@ target_link_libraries(appXiangqi
     PRIVATE
         Qt6::Quick
         Qt6::QuickControls2
+        Qt6::Network
 )
 
 set(CMAKE_INSTALL_PREFIX "/opt/${PROJECT_NAME}" CACHE PATH "Install path prefix" FORCE)
