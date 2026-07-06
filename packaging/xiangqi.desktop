@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=中国象棋
+Name[en_US]=Xiangqi
+Comment=Qt6 LAN Xiangqi Game
+Exec=/opt/Xiangqi/bin/run-xiangqi.sh
+Icon=applications-games
+Terminal=false
+Categories=Game;BoardGame;
