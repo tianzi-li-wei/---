@@ -12,7 +12,7 @@ qt_standard_project_setup(REQUIRES 6.11)
 
 qt_add_executable(appXiangqi
     main.cpp
-
+    README.md
     core/Constants.h
     core/Piece.h
     core/MoveResult.h
